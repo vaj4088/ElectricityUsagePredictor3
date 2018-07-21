@@ -19,12 +19,12 @@ public class Predictor {
     /**
      * @param args
      */
-    private final LocalDate dateBillCurrent ;
-    private final LocalDate dateCurrent ;
-    private final LocalDate dateBillNext ;
+    private LocalDate dateBillCurrent ;
+    private LocalDate dateCurrent ;
+    private LocalDate dateBillNext ;
     
-    private final int meterReadingBillCurrent ;
-    private final int meterReadingCurrent ;
+    private int meterReadingBillCurrent ;
+    private int meterReadingCurrent ;
     /* Will predict meterReadingNext and usageNext */
 
     	/**

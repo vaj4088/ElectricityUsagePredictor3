@@ -290,11 +290,11 @@ public class ElectricityUsagePredictor extends JFrame  {
 	    // Now allow the main thread to exit.
 	}
 	Predictor predictor = new Predictor.Builder().
-		currentBillDate(LocalDate.of(2018, Month.JUNE, 16)).
-		currentBillMeterReading(23728).
-		currentDate(LocalDate.of(2018, Month.JULY, 6)).
-		currentMeterReading(24378).
-		nextBillDate(LocalDate.of(2018, Month.JULY, 16)).
+		currentBillDate(LocalDate.of(2018, Month.JULY, 10)).
+		currentBillMeterReading(24512).
+		currentDate(LocalDate.of(2018, Month.JULY, 20)).
+		currentMeterReading(24873).
+		nextBillDate(LocalDate.of(2018, Month.AUGUST, 10)).
 		build() ;
 	System.out.println() ;
 	System.out.print("Current Bill Date: ") ;
