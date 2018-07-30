@@ -270,6 +270,10 @@ public class ElectricityUsagePredictor extends JFrame  {
 	// for how to do this with a RunnableFuture that can provide a
 	// result back to the caller.
 	//
+	java.util.concurrent.atomic.AtomicReference<ElectricityUsagePredictor>
+	gui2 = new 
+	java.util.concurrent.atomic.AtomicReference
+	<ElectricityUsagePredictor>() ;
 	try {
 	    javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
 		@Override
@@ -278,6 +282,7 @@ public class ElectricityUsagePredictor extends JFrame  {
 			    ElectricityUsagePredictor(
 			    "Electricity Usage Predictor");
 		    gui.fb.log("Finished setting up GUI.");
+		    gui2.set(gui) ;
 		}
 	    });
 	} catch (InterruptedException e) {
@@ -292,10 +297,26 @@ public class ElectricityUsagePredictor extends JFrame  {
 	Predictor predictor = new Predictor.Builder().
 		currentBillDate(LocalDate.of(2018, Month.JULY, 10)).
 		currentBillMeterReading(24512).
-		currentDate(LocalDate.of(2018, Month.JULY, 20)).
-		currentMeterReading(24873).
-		nextBillDate(LocalDate.of(2018, Month.AUGUST, 10)).
+		currentDate(LocalDate.of(2018, Month.JULY, 28)).
+		currentMeterReading(25189).
+		nextBillDate(LocalDate.of(2018, Month.AUGUST, 9)).
+//		currentBillDate(LocalDate.of(gui2.datePickerCurrentBillDate.getModel().getYear(), gui2.datePickerCurrentBillDate.getModel().getMonth(), gui2.datePickerCurrentBillDate.getModel().getDay())).
 		build() ;
+	/*
+	 
+ Date	  Delta Days	Start Read	Usage
+07/10/18		24512	
+07/28/18	18	25189	          677
+08/09/18	30	25640	         1128
+
+
+What is the best way to convert a java.util.Date object to 
+the new JDK 8/JSR-310 java.time.LocalDate?
+
+Date input = new Date();
+LocalDate date = input.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+	 */
 	System.out.println() ;
 	System.out.print("Current Bill Date: ") ;
 	System.out.println(predictor.getDateBillCurrent()) ;
@@ -318,6 +339,7 @@ public class ElectricityUsagePredictor extends JFrame  {
 	    System.err.println(predictedUsage) ;
 	}
 	System.out.println() ;
+	System.out.println(">> "+predictor.getDateBillCurrent().toString()) ;
     }
 }
 
