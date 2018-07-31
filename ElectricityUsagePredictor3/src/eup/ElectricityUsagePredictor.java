@@ -271,9 +271,9 @@ public class ElectricityUsagePredictor extends JFrame  {
 	// result back to the caller.
 	//
 	java.util.concurrent.atomic.AtomicReference<ElectricityUsagePredictor>
-	gui2 = new 
-	java.util.concurrent.atomic.AtomicReference
-	<ElectricityUsagePredictor>() ;
+	  gui2 = new 
+	    java.util.concurrent.atomic.AtomicReference
+	      <ElectricityUsagePredictor>() ;
 	try {
 	    javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
 		@Override
@@ -294,6 +294,10 @@ public class ElectricityUsagePredictor extends JFrame  {
 	    e.printStackTrace();
 	    // Now allow the main thread to exit.
 	}
+	ElectricityUsagePredictor gui = gui2.get() ;
+	JDatePickerImpl dPCBD = gui.datePickerCurrentBillDate ;
+	JDatePickerImpl dPCD  = gui.datePickerCurrentDate ;
+	JDatePickerImpl dPNBD = gui.datePickerNextBillDate ;
 	Predictor predictor = new Predictor.Builder().
 		currentBillDate(LocalDate.of(2018, Month.JULY, 10)).
 		currentBillMeterReading(24512).
