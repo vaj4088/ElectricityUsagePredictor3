@@ -169,7 +169,7 @@ public class ElectricityUsagePredictor extends JFrame  {
 	Properties p = new Properties();
 	
 	UtilDateModel modelCurrentBillDate = new UtilDateModel(
-		Date.from(LocalDate.of(2018, Month.JUNE, 16).
+		Date.from(LocalDate.of(2018, Month.JULY, 16).
 			atStartOfDay(ZoneId.systemDefault()).toInstant())) ;
 	JDatePanelImpl datePanelCurrentBillDate = 
 		new JDatePanelImpl(modelCurrentBillDate, p);
@@ -202,7 +202,7 @@ public class ElectricityUsagePredictor extends JFrame  {
 	hbox1.add(datePickerCurrentDate) ;
 	
 	UtilDateModel modelNextBillDate = new UtilDateModel(
-		Date.from(LocalDate.of(2018, Month.JULY, 16).
+		Date.from(LocalDate.of(2018, Month.AUGUST, 16).
 			atStartOfDay(ZoneId.systemDefault()).toInstant())) ;
 	JDatePanelImpl datePanelNextBillDate = 
 		new JDatePanelImpl(modelNextBillDate, p);
@@ -298,12 +298,24 @@ public class ElectricityUsagePredictor extends JFrame  {
 	JDatePickerImpl dPCBD = gui.datePickerCurrentBillDate ;
 	JDatePickerImpl dPCD  = gui.datePickerCurrentDate ;
 	JDatePickerImpl dPNBD = gui.datePickerNextBillDate ;
+//	System.out.println(dPCBD.getModel().getValue().getClass().toString()) ;
+//	System.out.println(dPCD.getModel().getValue().getClass().getCanonicalName()) ;
+//	System.out.println(dPNBD.getModel().getValue().getClass().getSimpleName()) ;
+	Date cBD = (Date) dPCBD.getModel().getValue() ;
+	Date cD  = (Date)  dPCD.getModel().getValue() ;
+	Date nBD = (Date) dPNBD.getModel().getValue() ;
+	System.out.println("Current Bill Date is " + cBD) ;
+	System.out.println("Current      Date is " + cD) ;
+	System.out.println("Next    Bill Date is " + nBD) ;
 	Predictor predictor = new Predictor.Builder().
-		currentBillDate(LocalDate.of(2018, Month.JULY, 10)).
+		currentBillDate(cBD.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()).
+//		currentBillDate(LocalDate.of(2018, Month.JULY, 10)).
 		currentBillMeterReading(24512).
-		currentDate(LocalDate.of(2018, Month.JULY, 28)).
+		currentDate(cD.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()).
+//		currentDate(LocalDate.of(2018, Month.JULY, 28)).
 		currentMeterReading(25189).
-		nextBillDate(LocalDate.of(2018, Month.AUGUST, 9)).
+		nextBillDate(nBD.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()).
+//		nextBillDate(LocalDate.of(2018, Month.AUGUST, 9)).
 //		currentBillDate(LocalDate.of(gui2.datePickerCurrentBillDate.getModel().getYear(), gui2.datePickerCurrentBillDate.getModel().getMonth(), gui2.datePickerCurrentBillDate.getModel().getDay())).
 		build() ;
 	/*
