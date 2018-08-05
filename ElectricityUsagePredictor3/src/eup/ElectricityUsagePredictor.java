@@ -38,7 +38,9 @@ import org.jdatepicker.impl.UtilDateModel;
  * @author Ian Shef
  * 
  */
-public class ElectricityUsagePredictor extends JFrame  {
+public class ElectricityUsagePredictor
+extends JFrame
+implements ActionListener {
 
     /**
      * 
@@ -59,6 +61,11 @@ public class ElectricityUsagePredictor extends JFrame  {
 
     Feedbacker fb;
 
+	static
+	java.util.concurrent.atomic.AtomicReference<ElectricityUsagePredictor>
+	  gui2 = new 
+	    java.util.concurrent.atomic.AtomicReference
+	      <ElectricityUsagePredictor>() ;
     /**
      * 
      */
@@ -223,7 +230,10 @@ public class ElectricityUsagePredictor extends JFrame  {
 	fb.log("Making visible.", Feedbacker.TO_FILE + 
 		Feedbacker.TO_GUI);
 	setVisible(true);
-    }
+	datePickerCurrentBillDate.addActionListener(this) ;
+	datePickerCurrentDate.    addActionListener(this) ;
+	datePickerNextBillDate.   addActionListener(this) ;
+    } 
 
     /**
      * Must be called while executing on Event Dispatch Thread (EDT).
@@ -260,7 +270,7 @@ public class ElectricityUsagePredictor extends JFrame  {
      */
     public static void main(String[] args) {
 	//
-	// ElectricityUsagePredictor extends JFrame and 
+	// ElectricityUsagePredictor extends JFrame and
 	// thus must be set up via the
 	// EDT (Event Dispatch Thread) !
 	//
@@ -270,19 +280,15 @@ public class ElectricityUsagePredictor extends JFrame  {
 	// for how to do this with a RunnableFuture that can provide a
 	// result back to the caller.
 	//
-	java.util.concurrent.atomic.AtomicReference<ElectricityUsagePredictor>
-	  gui2 = new 
-	    java.util.concurrent.atomic.AtomicReference
-	      <ElectricityUsagePredictor>() ;
 	try {
 	    javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
 		@Override
 		public void run() {
-		    ElectricityUsagePredictor gui =   new 
-			    ElectricityUsagePredictor(
+		    ElectricityUsagePredictor gui = 
+			    new ElectricityUsagePredictor(
 			    "Electricity Usage Predictor");
 		    gui.fb.log("Finished setting up GUI.");
-		    gui2.set(gui) ;
+		    gui2.set(gui);
 		}
 	    });
 	} catch (InterruptedException e) {
@@ -294,98 +300,83 @@ public class ElectricityUsagePredictor extends JFrame  {
 	    e.printStackTrace();
 	    // Now allow the main thread to exit.
 	}
-	ElectricityUsagePredictor gui = gui2.get() ;
-	JDatePickerImpl dPCBD = gui.datePickerCurrentBillDate ;
-	JDatePickerImpl dPCD  = gui.datePickerCurrentDate ;
-	JDatePickerImpl dPNBD = gui.datePickerNextBillDate ;
-//	System.out.println(dPCBD.getModel().getValue().getClass().toString()) ;
-//	System.out.println(dPCD.getModel().getValue().getClass().getCanonicalName()) ;
-//	System.out.println(dPNBD.getModel().getValue().getClass().getSimpleName()) ;
-	Date cBD = (Date) dPCBD.getModel().getValue() ;
-	Date cD  = (Date)  dPCD.getModel().getValue() ;
-	Date nBD = (Date) dPNBD.getModel().getValue() ;
-	System.out.println("Current Bill Date is " + cBD) ;
-	System.out.println("Current      Date is " + cD) ;
-	System.out.println("Next    Bill Date is " + nBD) ;
-	Predictor predictor = new Predictor.Builder().
-		currentBillDate(cBD.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()).
-//		currentBillDate(LocalDate.of(2018, Month.JULY, 10)).
-		currentBillMeterReading(24512).
-		currentDate(cD.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()).
-//		currentDate(LocalDate.of(2018, Month.JULY, 28)).
-		currentMeterReading(25189).
-		nextBillDate(nBD.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()).
-//		nextBillDate(LocalDate.of(2018, Month.AUGUST, 9)).
-//		currentBillDate(LocalDate.of(gui2.datePickerCurrentBillDate.getModel().getYear(), gui2.datePickerCurrentBillDate.getModel().getMonth(), gui2.datePickerCurrentBillDate.getModel().getDay())).
-		build() ;
-	/*
-	 
- Date	  Delta Days	Start Read	Usage
-07/10/18		24512	
-07/28/18	18	25189	          677
-08/09/18	30	25640	         1128
+    }
+    
+    @Override
+    public void actionPerformed(ActionEvent ae) {
+ 	System.out.println("Action Event " + ae.toString()) ;
+ 	ElectricityUsagePredictor gui = gui2.get() ;
+ 	JDatePickerImpl dPCBD = gui.datePickerCurrentBillDate ;
+ 	JDatePickerImpl dPCD  = gui.datePickerCurrentDate ;
+ 	JDatePickerImpl dPNBD = gui.datePickerNextBillDate ;
+ 	Date cBD = (Date) dPCBD.getModel().getValue() ;
+ 	Date cD  = (Date)  dPCD.getModel().getValue() ;
+ 	Date nBD = (Date) dPNBD.getModel().getValue() ;
+ 	Predictor predictor = new Predictor.Builder().
+ 		currentBillDate(cBD.toInstant().
+ 			atZone(ZoneId.systemDefault()).toLocalDate()).
+ 		currentBillMeterReading(24512).
+ 		currentDate(cD.toInstant().
+ 			atZone(ZoneId.systemDefault()).toLocalDate()).
+ 		currentMeterReading(25189).
+ 		nextBillDate(nBD.toInstant().
+ 			atZone(ZoneId.systemDefault()).toLocalDate()).
+ 		build() ;
+ 	System.out.println() ;
+ 	System.out.print("Current Bill Date: ") ;
+ 	System.out.println(predictor.getDateBillCurrent()) ;
+ 	System.out.print("Current Bill Meter Reading: ") ;
+ 	System.out.println(predictor.getMeterReadingBillCurrent()) ;
+ 	System.out.println() ;
+ 	System.out.print("Current      Date   : ") ;
+ 	System.out.println(predictor.getDateCurrent()) ;
+ 	System.out.print("Current     Meter Reading : ") ;
+ 	System.out.println(predictor.getMeterReadingCurrent()) ;
+ 	System.out.println() ;
+ 	System.out.print("Next    Bill Date   : ") ;
+ 	System.out.println(predictor.getDateBillNext()) ;
+ 	int predictedUsage = predictor.predictUsage() ;
+ 	PrintStream where = System.err ;
+ 	if ((predictedUsage>=500) && (predictedUsage<=1000)) {
+ 	    where = System.out ;
+ 	}
+ 	where.print("Predicted   Usage : ") ;
+ 	where.println(predictedUsage) ;
+ 	System.out.println() ;
+ 	System.out.println(">> "+predictor.getDateBillCurrent().toString()) ;
+     }
 
 
-What is the best way to convert a java.util.Date object to 
-the new JDK 8/JSR-310 java.time.LocalDate?
 
-Date input = new Date();
-LocalDate date = input.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+    class DateLabelFormatter extends AbstractFormatter {
 
+	/**
+	 * 
 	 */
-	System.out.println() ;
-	System.out.print("Current Bill Date: ") ;
-	System.out.println(predictor.getDateBillCurrent()) ;
-	System.out.print("Current Bill Meter Reading: ") ;
-	System.out.println(predictor.getMeterReadingBillCurrent()) ;
-	System.out.println() ;
-	System.out.print("Current      Date   : ") ;
-	System.out.println(predictor.getDateCurrent()) ;
-	System.out.print("Current     Meter Reading : ") ;
-	System.out.println(predictor.getMeterReadingCurrent()) ;
-	System.out.println() ;
-	System.out.print("Next    Bill Date   : ") ;
-	System.out.println(predictor.getDateBillNext()) ;
-	int predictedUsage = predictor.predictUsage() ;
-	if ((predictedUsage>=500) && (predictedUsage<=1000)) {
-	    System.out.print("Predicted   Usage : ") ;
-	    System.out.println(predictedUsage) ;
-	} else {
-	    System.err.print("Predicted   Usage : ") ;
-	    System.err.println(predictedUsage) ;
+	private static final long serialVersionUID = 1L;
+	//    private String datePattern = "yyyy-MM-dd";
+	//
+	// Pattern gives: 
+	// day_name month_name day_number_of_month, 4_digit_year_number
+	//
+	private String datePattern = "EEEEEEEEE LLLLLLLLL dd, yyyy";
+	private SimpleDateFormat dateFormatter = 
+		new SimpleDateFormat(datePattern);
+
+	@Override
+	public Object stringToValue(String text) throws ParseException {
+	    return dateFormatter.parseObject(text);
 	}
-	System.out.println() ;
-	System.out.println(">> "+predictor.getDateBillCurrent().toString()) ;
-    }
-}
 
-class DateLabelFormatter extends AbstractFormatter {
+	@Override
+	public String valueToString(Object value) {
+	    if (value != null) {
+		Calendar cal = (Calendar) value;
+		return dateFormatter.format(cal.getTime());
+	    }
 
-    /**
-     * 
-     */
-    private static final long serialVersionUID = 1L;
-//    private String datePattern = "yyyy-MM-dd";
-    //
-    // Pattern gives: 
-    // day_name month_name day_number_of_month, 4_digit_year_number
-    //
-    private String datePattern = "EEEEEEEEE LLLLLLLLL dd, yyyy";
-    private SimpleDateFormat dateFormatter = new SimpleDateFormat(datePattern);
-
-    @Override
-    public Object stringToValue(String text) throws ParseException {
-        return dateFormatter.parseObject(text);
-    }
-
-    @Override
-    public String valueToString(Object value) {
-        if (value != null) {
-            Calendar cal = (Calendar) value;
-            return dateFormatter.format(cal.getTime());
-        }
-
-        return "";
+	    return "";
+	}
     }
 }
 
