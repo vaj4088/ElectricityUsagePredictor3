@@ -1,0 +1,4 @@
+javadocs are at http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/index.html
+
+(for some version of the files).
+

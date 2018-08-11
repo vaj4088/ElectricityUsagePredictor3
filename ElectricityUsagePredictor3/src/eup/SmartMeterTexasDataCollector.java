@@ -4,10 +4,8 @@ import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.*;
 import org.apache.commons.httpclient.params.HttpMethodParams;
-//import org.ccil.cowan.tagsoup.Parser;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
-//import org.xml.sax.SAXException;
 import org.xml.sax.ext.DefaultHandler2;
 
 import webPage.UnacceptableFormsException;
@@ -17,15 +15,11 @@ import webPage.WebPage;
 import java.awt.Container;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
-//import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-//import java.util.Collections;
-//import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-//import java.util.regex.Pattern;
 
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
@@ -1905,4 +1899,58 @@ class CourseCH extends DefaultHandler2 {
      * startCDATA, startDTD, startDocument, startElement, startEntity,
      * startPrefixMapping, unparsedEntityDecl, warning }
      */
+    
+    /*
+     * javadocs for HttpClient are at 
+     * http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/index.html
+     * 
+     * (for some version of the files).
+     */
+    
+    public void login() {
+	/* Intentionally empty for now, will fill in later. */
+	/*
+	 * Uses these messages:
+	 *  91 GET
+	 * 114 POST
+	 *  Page data is
+	 *  pass_dup=&username=VAJ4088&password=bri2bri&buttonName=&login-form-type=pwd
+	 *  Response is
+	 *  302 Moved Temporarily
+	 * 115 GET
+	 *  Response is
+	 *  302 Found
+	 * 116 GET
+	 */
+    }
+    
+    public void getData() {
+	/* Intentionally empty for now, will fill in later. */
+	/*
+	 * Uses these messages:
+	 * 164 POST
+	 *  Response contains some data.
+	 *  Page data is
+	 *  _bowStEvent=Usage%2Fportlet%2FUsageCustomerMetersPortlet%21fireEvent%3AForm%3AViewUsagePage_SaveDataSubmitEvent&tag_UserLocale=en&reportType=DAILY&viewUsage_startDate=08%2F06%2F2018&viewUsage_endDate=08%2F06%2F2018&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e=&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e1=&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2=&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2=
+	 * 170 POST
+	 *  Response contains the data!
+	 *  Page Data is
+	 *  _bowStEvent=Usage%2Fportlet%2FUsageCustomerMetersPortlet%21fireEvent%3AForm%3AViewUsagePage_SaveDataSubmitEvent&tag_UserLocale=en&reportType=DAILY&viewUsage_startDate=08%2F01%2F2018&viewUsage_endDate=08%2F03%2F2018&viewusage_but_updaterpt=Update+Report&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e=&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e1=&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2=&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2=
+ 	
+	 */
+    }
+    
+    public void logout() {
+	/* Intentionally empty for now, will fill in later. */
+	/*
+	 * Uses these messages:
+	 * 173 GET
+	 * 174 GET
+	 * 175 GET
+	 *  Response is
+	 *  301 Moved Permanently
+	 *  
+	 */
+    }
+   
 }
