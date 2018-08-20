@@ -56,8 +56,8 @@ public class SmartMeterTexasDataCollector {
     private HttpClient client; // Handles the work, holds context
     // (i.e. cookies).
     
-    private String contentLocation ;
-
+    String addressSuffix = "" ;
+    
     private static final String field1Begin = "<select name='";
     private static final String field1End = "' ";
     private static final String field2Begin = "<input type='text' name='";
@@ -1908,37 +1908,37 @@ class CourseCH extends DefaultHandler2 {
      * 
      * (for some version of the files).
      */
-
-    private void updateContentLocation() {
-	Header rh = (new HttpMethodBase() {
-	    @Override
-	    public String getName() {
-		return "FAKE";
-	    }
-	}).getResponseHeader("content-location");
-	if (rh != null) {
-	    contentLocation = rh.getValue();
-	    System.out.println(
-		    "contentLocation updated to " + contentLocation) ;
-	}
+    
+//    private String contentLocationValue() {
+//	char commentChar = '#' ;
+//	if (contentLocation == null) contentLocation = "" ;
+//	int index = contentLocation.indexOf(commentChar) ;
+//	if (index >= 0) {
+//	    return contentLocation.substring(0, index) ;
+//	}
+//	return contentLocation ;
+//    }
+    
+    private String extractAddress(WebPage wp) {
+	if (wp == null) return "" ;
+	return "" ;
     }
-
+    
     public void login() {
 	List <NameValuePair> nameValuePairs = new ArrayList<>() ;
 
 	getPage("https://www.smartmetertexas.com:443/CAP/public/") ; // 91
-	updateContentLocation() ;
 	
 	nameValuePairs.add(new NameValuePair("pass_dup", "")) ;
 	nameValuePairs.add(new NameValuePair("username", "VAJ4088")) ;
 	nameValuePairs.add(new NameValuePair("password", "bri2bri")) ;
 	nameValuePairs.add(new NameValuePair("buttonName", "")) ;
 	nameValuePairs.add(new NameValuePair("login-form-type", "pwd")) ;
+	WebPage wp =
 	getPage("https://www.smartmetertexas.com:443/pkmslogin.form",
 		nameValuePairs,
 		null) ; // 114 POST- sets some cookies and 
 	                // leads to 115 automatically.
-	updateContentLocation() ;
 	/*
 	 * from
 	 * 00 - WebScarab 20180808 myexpressenergy_com Login
@@ -1947,53 +1947,76 @@ class CourseCH extends DefaultHandler2 {
 	 *  91 GET - may not be needed, but sets some cookies.
 	 * 114 POST- sets some cookies and leads to 115 automatically.
 	 *  Page data is
-	 *  pass_dup=&username=VAJ4088&password=bri2bri&buttonName=&login-form-type=pwd
+  pass_dup=&username=VAJ4088&password=bri2bri&buttonName=&login-form-type=pwd
 	 *  Response is
 	 *  302 Moved Temporarily
 	 * 115 GET - sets some cookies and probably leads to 116 automatically.
 	 *  Response is
 	 *  302 Found
-	 * 116 GET - sets some cookies.  Also important:  content-location
-
+	 * 116 GET - sets some cookies. 
 	 */
-	/*
-	  
-	 
-   (login 116) content-location:
-    https://www.smartmetertexas.com/texas/wps/myportal/!ut/p/z1/hY_NDoIwEISfxUOv7KZERW8VTP2JkXgBezGFVCShQNoqPr5GvWhQ9zabbyYzICAFUctLWUhXNrWs7novRgc-ni-i5cRHHmOELKR0Ml_7NOBjSB4AfjmGIP75xS-Eb4Yv4DN4tqMzH5FvaS_w1mEFoqia7LmH1ZkfFCCMOiqjjHc29_fJudZOCRLsus6zWhqnlVPGqau0Xt5ogiGLCbbnrCpzgn1Bp8Y6SL_4odUplrFOAssGN6P8mgg!/dz/d5/L2dBISEvZ0FBIS9nQSEh/
-
-(Get Data 164) content-location:
-    https://www.smartmetertexas.com/texas/wps/myportal/!ut/p/z1/hZDNboMwEISfxld2MSQ4vTkhcv7aovYA8SUykUOQMCBjSh-_qK1UtSLN3nb1zWhnQEIGslZvZaFc2dSqGvejnJ9EtN7E20WAIsEY-YrSxXofUCYiSD8BvDEcQd7Ty_8Q8Tj7Bv4aL1_oMkAUz3QS-PXDDmRRNflXHl7nAStAWn3RVluvt-P56lzbPRAkOAyD1xllndFOW6ffVeedG0NwxROCbZ9X5ZnglNG16RxkN_RwHIuKfmKyp5CPMQ8xhvjqY-hDazIsE5Myx4oPohGvFA!!/dz/d5/L2dBISEvZ0FBIS9nQSEh/
-(Get Data 170) content-location:
-    https://www.smartmetertexas.com/texas/wps/myportal/!ut/p/z1/hZDNboMwEISfxld2MSQ4vTkhcv7aovYA8SUykUOQMCBjSh-_qK1UtSLN3nb1zWhnQEIGslZvZaFc2dSqGvejnJ9EtN7E20WAIsEY-YrSxXofUCYiSD8BvDEcQd7Ty_8Q8Tj7Bv4aL1_oMkAUz3QS-PXDDmRRNflXHl7nAStAWn3RVluvt-P56lzbPRAkOAyD1xllndFOW6ffVeedG0NwxROCbZ9X5ZnglNG16RxkN_RwHIuKfmKyp5CPMQ8xhvjqY-hDazIsE5Myx4oPohGvFA!!/dz/d5/L2dBISEvZ0FBIS9nQSEh/
-https://www.smartmetertexas.com:443/texas/wps/myportal/!ut/p/z1/hZDNboMwEISfxld2MSQ4vTkhcv7aovYA8SUykUOQMCBjSh-_qK1UtSLN3nb1zWhnQEIGslZvZaFc2dSqGvejnJ9EtN7E20WAIsEY-YrSxXofUCYiSD8BvDEcQd7Ty_8Q8Tj7Bv4aL1_oMkAUz3QS-PXDDmRRNflXHl7nAStAWn3RVluvt-P56lzbPRAkOAyD1xllndFOW6ffVeedG0NwxROCbZ9X5ZnglNG16RxkN_RwHIuKfmKyp5CPMQ8xhvjqY-hDazIsE5Myx4oPohGvFA!!/dz/d5/L3dDb1ZJQSEhL3dPb0JKTnNBLzRFS2lqaFVNV0hFIS90cjVsbXdiTEFfUS80NTI1MzcvbG8!/
-
-		    String redirectLocation;
-		    Header locationHeader = method
-			    .getResponseHeader("location");
-		    if (locationHeader != null) {
-			redirectLocation = locationHeader.getValue();
-
-	 */
+	addressSuffix = extractAddress(wp) ;
     }
     
     public void getData() {
-	/* Intentionally empty for now, will fill in later. */
+	List<NameValuePair> nameValuePairs = new ArrayList<>();
+
 	/*
-	 * from
-	 * 00 - WebScarab 20180808 myexpressenergy_com Get Data
+	 * from 00 - WebScarab 20180808 myexpressenergy_com Get Data
 	 * 
-	 * Uses these messages:
-	 * 164 POST- address from 116
-	 *  Response contains some data.
-	 *  Page data is
-	 *  _bowStEvent=Usage%2Fportlet%2FUsageCustomerMetersPortlet%21fireEvent%3AForm%3AViewUsagePage_SaveDataSubmitEvent&tag_UserLocale=en&reportType=DAILY&viewUsage_startDate=08%2F06%2F2018&viewUsage_endDate=08%2F06%2F2018&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e=&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e1=&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2=&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2=
-	 * 170 POST
-	 *  Response contains the data!
-	 *  Page Data is
-	 *  _bowStEvent=Usage%2Fportlet%2FUsageCustomerMetersPortlet%21fireEvent%3AForm%3AViewUsagePage_SaveDataSubmitEvent&tag_UserLocale=en&reportType=DAILY&viewUsage_startDate=08%2F01%2F2018&viewUsage_endDate=08%2F03%2F2018&viewusage_but_updaterpt=Update+Report&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e=&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e1=&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2=&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2=
-	 *  
+	 * Uses these messages: 164 POST- address from ? 
+	 * Response contains some
+	 * data. Page data is
+	 * _bowStEvent=Usage%2Fportlet%2FUsageCustomerMetersPortlet%21fireEvent%
+	 * 3AForm%3AViewUsagePage_SaveDataSubmitEvent&tag_UserLocale=en&
+	 * reportType=DAILY&viewUsage_startDate=08%2F06%2F2018&viewUsage_endDate
+	 * =08%2F06%2F2018&
+	 * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e
+	 * =&
+	 * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e1
+	 * =&
+	 * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2
+	 * =&
+	 * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2=
+	 * 170 POST Response contains the data! Page Data is
+	 * _bowStEvent=Usage%2Fportlet%2FUsageCustomerMetersPortlet%21fireEvent%
+	 * 3AForm%3AViewUsagePage_SaveDataSubmitEvent&tag_UserLocale=en&
+	 * reportType=DAILY&viewUsage_startDate=08%2F01%2F2018&viewUsage_endDate
+	 * =08%2F03%2F2018&viewusage_but_updaterpt=Update+Report&
+	 * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e
+	 * =&
+	 * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e1
+	 * =&
+	 * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2
+	 * =&
+	 * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2=
+	 * 
 	 */
+	
+	//
+	// Preparing to do POST 164
+	//
+	nameValuePairs.add(new NameValuePair("_bowStEvent",
+		"Usage%2Fportlet%2FUsageCustomerMetersPortlet%21fireEvent"
+			+ "%3AForm%3AViewUsagePage_SaveDataSubmitEvent"));
+	nameValuePairs.add(new NameValuePair("tag_UserLocale", "en"));
+	nameValuePairs.add(new NameValuePair("reportType", "DAILY"));
+	nameValuePairs.add(
+		new NameValuePair("viewUsage_startDate", "08%2F01%2F2018"));
+	nameValuePairs
+		.add(new NameValuePair("viewUsage_endDate", "08%2F03%2F2018"));
+	nameValuePairs.add(new NameValuePair("_bst_locator_Usage_00215portlet"
+		+ "_00215UsageCustomerMetersPortlet_00515ResidentialC"
+		+ "_00515Default_00515Default_00515Default"
+		+ "_00515Esiid_005151651b3535a4_00515b6e7e", ""));
+	nameValuePairs.add(new NameValuePair("_bst_locator_Usage_00215portlet"
+		+ "_00215UsageCustomerMetersPortlet_00515ResidentialC"
+		+ "_00515Default_00515Default_00515Default"
+		+ "_00515Esiid_005151651b3535a4_00515b6e7e1", ""));
+	nameValuePairs.add(new NameValuePair("_bst_locator_Usage_00215portlet"
+		+ "_00215UsageCustomerMetersPortlet_00515ResidentialC"
+		+ "_00515Default_00515Default_00515Default"
+		+ "_00515Esiid_005151651b3535a4_00515b6e7e2", ""));
     }
     
     public void logout() {
@@ -2009,7 +2032,6 @@ https://www.smartmetertexas.com:443/texas/wps/myportal/!ut/p/z1/hZDNboMwEISfxld2
 	 *  301 Moved Permanently, which automatically causes 176.
 	 *  
 	 */
-//	getPage(url)
     }
    
 }
