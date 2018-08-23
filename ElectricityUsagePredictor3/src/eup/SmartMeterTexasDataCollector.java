@@ -1941,24 +1941,48 @@ class CourseCH extends DefaultHandler2 {
 	public GetData(Date date) {
 	    this.date = date ;
 	}
-	    private String extractAddressFromLogin(WebPage wp) {
-		WPLocation wpl = wp.indexOf("_f.action = &quot;/") ;
-		if (wpl.getLine()<0) return "" ;
-		wpl = wp.indexOf("/", 
-			wpl.getLine(), 
-			wpl.getColumn()) ;
-		if (wpl.getLine()<0) return "" ;
-		WPLocation wpl2 = wp.indexOf("#",
-			wpl.getLine(),
-			wpl.getColumn()) ;
-		if (wpl2.getLine()<0) return "" ;
-		// TODO - Continue coding here.
-		return "" ;
+	
+	@SuppressWarnings("synthetic-access")
+	private String extractAddressFromLogin(WebPage wp) {
+	    String startFrom1 = "_f.action = &quot;/";
+	    String startFrom2 = "/";
+	    String goTo = "#";
+	    WPLocation wpl = wp.indexOf(startFrom1);
+	    assertGoodLocation(wpl);
+	    wpl = wp.indexOf(startFrom2, 
+		    wpl.getLine(),
+		    wpl.getColumn());
+	    assertGoodLocation(wpl);
+	    wpl = wp.indexOf(startFrom2, wpl.getLine(), wpl.getColumn());
+	    assertGoodLocation(wpl);
+	    WPLocation wpl2 = wp.indexOf(goTo, wpl.getLine(), wpl.getColumn());
+	    assertGoodLocation(wpl2);
+	    String s = wp.subString(wpl, startFrom2, goTo);
+	    msg("New suffix from login: " + s + " .");
+	    return s;
+	}
+	    
+	@SuppressWarnings("synthetic-access")
+	private String extractAddressFromGetData(WebPage wp) {
+	    String startFrom1 = "<div id=\"banner_logout\">";
+	    String startFrom2 = "href='";
+	    String startFrom3 = "/" ;
+	    String goTo = "'";
+	    WPLocation wpl = wp.indexOf(startFrom1);
+	    assertGoodLocation(wpl);
+	    wpl = wp.indexOf(startFrom2, wpl.getLine());
+	    assertGoodLocation(wpl);
+	    wpl = wp.indexOf(startFrom3, wpl.getLine(), wpl.getColumn());
+	    assertGoodLocation(wpl);
+	    WPLocation wpl2 = wp.indexOf(goTo, wpl.getLine(), wpl.getColumn());
+	    assertGoodLocation(wpl2);
+	    String s = wp.subString(wpl, startFrom3, goTo);
+	    msg("New suffix from Get Data: " + s + " .");
+	    return s;
 	    }
 	    
-	    private String extractAddressFromGetData(WebPage wp) {
-		if (wp == null) return "" ;
-		return "" ;
+	    private void assertGoodLocation(WPLocation wpl) {
+		if (wpl.getLine()<0) throw new Error("Bad location.") ;
 	    }
 	    
 	    private void login() {
@@ -2033,37 +2057,51 @@ class CourseCH extends DefaultHandler2 {
 		//
 		// Preparing to do POST 164
 		//
-		nameValuePairs.add(new NameValuePair("_bowStEvent",
-			"Usage%2Fportlet%2FUsageCustomerMetersPortlet%21fireEvent"
-				+ "%3AForm%3AViewUsagePage_SaveDataSubmitEvent"));
-		nameValuePairs.add(new NameValuePair("tag_UserLocale", "en"));
-		nameValuePairs.add(new NameValuePair("reportType", "DAILY"));
-		nameValuePairs.add(
-			new NameValuePair("viewUsage_startDate", "08%2F01%2F2018"));
-		nameValuePairs
-			.add(new NameValuePair("viewUsage_endDate", "08%2F03%2F2018"));
-		nameValuePairs.add(new NameValuePair("_bst_locator_Usage_00215portlet"
-			+ "_00215UsageCustomerMetersPortlet_00515ResidentialC"
-			+ "_00515Default_00515Default_00515Default"
-			+ "_00515Esiid_005151651b3535a4_00515b6e7e", ""));
-		nameValuePairs.add(new NameValuePair("_bst_locator_Usage_00215portlet"
-			+ "_00215UsageCustomerMetersPortlet_00515ResidentialC"
-			+ "_00515Default_00515Default_00515Default"
-			+ "_00515Esiid_005151651b3535a4_00515b6e7e1", ""));
-		nameValuePairs.add(new NameValuePair("_bst_locator_Usage_00215portlet"
-			+ "_00215UsageCustomerMetersPortlet_00515ResidentialC"
-			+ "_00515Default_00515Default_00515Default"
-			+ "_00515Esiid_005151651b3535a4_00515b6e7e2", ""));
-		WebPage wp = 
-			getPage("https://www.smartmetertexas.com:443" + addressSuffix, 
-			nameValuePairs, null) ;
-		/*
-		 * NOW :  GET THE DATA !!!
-		 * ALSO:  GET THE NEW addressSuffix !!!
-		 */
-		addressSuffix = extractAddressFromGetData(wp) ;
-	    }
-	    
+	    nameValuePairs.add(new NameValuePair("_bowStEvent",
+		    "Usage%2Fportlet%2FUsageCustomerMetersPortlet%21fireEvent"
+			    + "%3AForm%3AViewUsagePage_SaveDataSubmitEvent"));
+	    nameValuePairs.add(new NameValuePair("tag_UserLocale", "en"));
+	    nameValuePairs.add(new NameValuePair("reportType", "DAILY"));
+	    nameValuePairs.add(
+		    new NameValuePair("viewUsage_startDate", "08%2F01%2F2018"));
+	    nameValuePairs.add(
+		    new NameValuePair("viewUsage_endDate", "08%2F03%2F2018"));
+	    nameValuePairs.add(
+		    new NameValuePair(
+			    "_bst_locator_Usage_00215portlet"
+				    + "_00215UsageCustomerMetersPortlet"
+				    + "_00515ResidentialC"
+				    + "_00515Default_00515Default"
+				    + "_00515Default"
+				    + "_00515Esiid_005151651b3535a4_00515b6e7e",
+			    ""));
+	    nameValuePairs.add(
+		    new NameValuePair(
+			    "_bst_locator_Usage_00215portlet"
+				    + "_00215UsageCustomerMetersPortlet"
+				    + "_00515ResidentialC"
+				    + "_00515Default_00515Default_00515Default"
+				    + "_00515Esiid"
+				    + "_005151651b3535a4_00515b6e7e1",
+			    ""));
+	    nameValuePairs.add(
+		    new NameValuePair(
+			    "_bst_locator_Usage_00215portlet"
+				    + "_00215UsageCustomerMetersPortlet"
+				    + "_00515ResidentialC"
+				    + "_00515Default_00515Default_00515Default"
+				    + "_00515Esiid"
+				    + "_005151651b3535a4_00515b6e7e2",
+			    ""));
+	    WebPage wp = getPage(
+		    "https://www.smartmetertexas.com:443" + addressSuffix,
+		    nameValuePairs, null);
+	    /*
+	     * NOW : GET THE DATA !!! ALSO: GET THE NEW addressSuffix !!!
+	     */
+	    addressSuffix = extractAddressFromGetData(wp);
+	}
+
 	    private void logout() {
 		//
 		// Conversation 173 GET - sets some cookies.

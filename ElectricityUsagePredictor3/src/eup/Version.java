@@ -20,7 +20,7 @@ public final class Version<T> implements Serializable, Comparable<T> {
      */
     private static final String VERSION = "Revised on"
 	    + " Date: 2018-08-23"
-	    + " at 1159"
+	    + " at 1615"
 	    + " via manual intervention.";
     private static final long serialVersionUID = 1L;
     private static final Version<String> INSTANCE = new Version<String>();
