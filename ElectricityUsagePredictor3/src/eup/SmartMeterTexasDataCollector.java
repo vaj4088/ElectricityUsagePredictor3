@@ -17,6 +17,7 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -1928,8 +1929,34 @@ class CourseCH extends DefaultHandler2 {
 	 
 	 may need to do:  (new SmartMeterTexasDataCollector.GetData()).start() ;
 	 
+	 except that the GetData constructor needs a parameter.
+	 
 	 */
-	    private String extractAddress(WebPage wp) {
+	
+	Date date ;
+	
+	@SuppressWarnings("unused")
+	private GetData() {} // No available no-argument constructor.
+	
+	public GetData(Date date) {
+	    this.date = date ;
+	}
+	    private String extractAddressFromLogin(WebPage wp) {
+		WPLocation wpl = wp.indexOf("_f.action = &quot;/") ;
+		if (wpl.getLine()<0) return "" ;
+		wpl = wp.indexOf("/", 
+			wpl.getLine(), 
+			wpl.getColumn()) ;
+		if (wpl.getLine()<0) return "" ;
+		WPLocation wpl2 = wp.indexOf("#",
+			wpl.getLine(),
+			wpl.getColumn()) ;
+		if (wpl2.getLine()<0) return "" ;
+		// TODO - Continue coding here.
+		return "" ;
+	    }
+	    
+	    private String extractAddressFromGetData(WebPage wp) {
 		if (wp == null) return "" ;
 		return "" ;
 	    }
@@ -1965,7 +1992,7 @@ class CourseCH extends DefaultHandler2 {
 		 *  302 Found
 		 * 116 GET - sets some cookies. 
 		 */
-		addressSuffix = extractAddress(wp) ;
+		addressSuffix = extractAddressFromLogin(wp) ;
 	    }
 	    
 	    private void getData() {
@@ -2034,7 +2061,7 @@ class CourseCH extends DefaultHandler2 {
 		 * NOW :  GET THE DATA !!!
 		 * ALSO:  GET THE NEW addressSuffix !!!
 		 */
-		extractAddress(wp) ;
+		addressSuffix = extractAddressFromGetData(wp) ;
 	    }
 	    
 	    private void logout() {
