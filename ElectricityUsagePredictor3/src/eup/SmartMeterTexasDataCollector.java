@@ -180,15 +180,18 @@ public class SmartMeterTexasDataCollector {
 	    NameValuePair[] params = method.getParameters();
 	    msgEDT("" + params.length + " parameters:");
 	    for (int i = 0; i < params.length; i++) {
-		msgEDT("    " + params[i].getName() + "=" + params[i].getValue());
+		msgEDT(
+			"    " + params[i].getName() + 
+			"=" + params[i].getValue());
 	    }
 	}
 	if (displayResponseBody) {
-	    msgEDT("*******************************************    POST  START");
+	    msgEDT(
+		    "*******************************************    POST  START"
+		    );
 	}
 	//
-	// 3 Nov 2012 - Be lenient about cookies. NAU cookies violate
-	// RFC 2109 and cause a warning.
+	// 3 Nov 2012 - Be lenient about cookies.
 	//
 	method.getParams().setCookiePolicy(CookiePolicy.BROWSER_COMPATIBILITY);
 	wp = requestResponse(method);
@@ -242,7 +245,8 @@ public class SmartMeterTexasDataCollector {
 		    } else {
 			// The response is invalid and did not provide the new
 			// location for the resource. Report an error.
-			msgEDT(toString() + "#requestResponse failed attempt to "
+			msgEDT(toString() + 
+				"#requestResponse failed attempt to "
 				+ "executeMethod on "
 				+ method.getClass().getName()
 				+ ", status code " + statusCode + ": "
@@ -426,7 +430,8 @@ public class SmartMeterTexasDataCollector {
 	    current = wp.indexOf(FORM_END, current).getLine();
 	    if (current >= 0) {
 		if ((wp.line(current).indexOf("document.write(\"") < 0)
-			&& (wp.line(current).indexOf("iframeDoc.write(\"") < 0)) {
+			&& (wp.line(current).indexOf(
+				"iframeDoc.write(\"") < 0)) {
 		    end = current;
 		    current = -1; // Indicate no further searching for
 		    // end of form.
@@ -513,42 +518,6 @@ public class SmartMeterTexasDataCollector {
 	this.displayResponseBody = displayResponseBody;
     }
 
-    /**
-     * A convenience method for displaying a line of text on System.out.
-     * 
-     * @param ob
-     *            An <tt>Object</tt> or a <tt>String</tt> to be displayed on
-     *            System.out. If an <tt>Object</tt>, its toString() method will
-     *            be called.
-     */
-//    public void msg(Object ob) {
-//	if (null == fb) {
-//	    System.out.println(ob);
-//	} else {
-//	    fb.log(ob, Feedbacker.TO_OUT + Feedbacker.TO_FILE);
-//	}
-//    }
-
-//	int sessionTotal = sessionOps.size();
-//	int sessionProgress = 100;
-//	for (SessionOp op : sessionOps) {
-//	    fb.progressAnnounce(sessionProgress / sessionTotal,
-//		    "Setting up to get sessions");
-//	    op.process();
-//	    sessionProgress += 100;
-
-
-//	fb.progressAnnounce(0, "Setting up to get departments");
-//	int deptTotal = deptOps.size();
-//	int deptProgress = 100;
-//	for (DeptOp op : deptOps) {
-//	    fb.progressAnnounce(deptProgress / deptTotal, "Getting departments");
-//	    op.process(session);
-//	    deptProgress += 100;
-//	}
-//	fb.log("Found " + departments.size() + " departments.",
-//		Feedbacker.TO_FILE + Feedbacker.TO_GUI);
-
 
     public Feedbacker getFeedbacker() {
 	return fb;
@@ -558,13 +527,6 @@ public class SmartMeterTexasDataCollector {
 	this.fb = fb;
     }
 
-//    @Override
-//    public String toString() {
-//	return Util.getCallerClassName() + 
-//		" " +
-//		Util.getCallerMethodName() +
-//		" is incomplete.";
-//    }
 
     static Feedbacker setupFeedbacker() {
 	final ArrayList<Feedbacker> holder = Util.makeArrayList(1);
@@ -572,7 +534,8 @@ public class SmartMeterTexasDataCollector {
 	    javax.swing.SwingUtilities.invokeAndWait((new Runnable() {
 		@Override
 		public void run() {
-		    final FeedbackerImplementation fb1 = new FeedbackerImplementation();
+		    final FeedbackerImplementation fb1 = 
+			    new FeedbackerImplementation();
 		    JFrame frame = new JFrame(fb1.toString());
 		    Container cp = frame.getContentPane();
 		    cp.setLayout(new BoxLayout(cp, BoxLayout.Y_AXIS));
@@ -607,8 +570,7 @@ public class SmartMeterTexasDataCollector {
     }
 
     /**
-     * A main program for testing purposes to develop and test access to the
-     * schedule of classes at Northern Arizona University.
+     * A main program for testing purposes to develop and test web access.
      * 
      * @param args
      *            Required but currently unused.
@@ -642,98 +604,6 @@ public class SmartMeterTexasDataCollector {
 	String s = cs.toString() ;
 	return new InputSource(new StringReader(s)) ;
     }
-
-//    private class SessionOp {
-//	private final String url;
-//
-//	SessionOp(String url) {
-//	    this.url = url;
-//	}
-//
-//	WebPage process() {
-//	    return getPage(url);
-//	}
-//    }
-
-//    private class DeptOp {
-//	private final String url;
-//
-//	DeptOp(String url) {
-//	    this.url = url;
-//	}
-//
-	/**
-	 * @param session
-	 *            Provides the session.
-	 */
-//	WebPage process(Session session) {
-//	    Collection<NameValuePair> nvpc = Util.makeArrayList(40);
-//	    nvpc.add(new NameValuePair("ICAJAX", "1"));
-//	    nvpc.add(new NameValuePair("ICNAVTYPEDROPDOWN", "1"));
-//	    nvpc.add(new NameValuePair("ICType", "Panel"));
-//	    nvpc.add(new NameValuePair("ICElementNum", "0"));
-//	    nvpc.add(new NameValuePair("ICAction",
-//		    "CLASS_SRCH_WRK2_STRM%2435%24"));
-//	    nvpc.add(new NameValuePair("ICXPos", "0"));
-//	    nvpc.add(new NameValuePair("ICYPos", "0"));
-//	    nvpc.add(new NameValuePair("ResponsetoDiffFrame", "-1"));
-//	    nvpc.add(new NameValuePair("TargetFrameName", "None"));
-//	    nvpc.add(new NameValuePair("FacetPath", "None"));
-//	    nvpc.add(new NameValuePair("ICFocus", ""));
-//	    nvpc.add(new NameValuePair("ICSaveWarningFilter", "0"));
-//	    nvpc.add(new NameValuePair("ICChanged", "-1"));
-//	    nvpc.add(new NameValuePair("ICResubmit", "0"));
-//	    nvpc.add(new NameValuePair("ICActionPrompt", "false"));
-//	    nvpc.add(new NameValuePair("ICFind", ""));
-//	    nvpc.add(new NameValuePair("ICAddCount", ""));
-//	    nvpc.add(new NameValuePair("ICAPPCLSDATA", ""));
-//	    nvpc.add(new NameValuePair("CLASS_SRCH_WRK2_INSTITUTION$31$",
-//		    "NAU00"));
-//	    nvpc.add(new NameValuePair("CLASS_SRCH_WRK2_STRM$35$", session
-//		    .getCode()));
-//	    nvpc.add(new NameValuePair("SSR_CLSRCH_WRK_SUBJECT_SRCH$0", ""));
-//	    nvpc.add(new NameValuePair("SSR_CLSRCH_WRK_SSR_EXACT_MATCH1$1", "E"));
-//	    nvpc.add(new NameValuePair("SSR_CLSRCH_WRK_CATALOG_NBR$1", ""));
-//	    nvpc.add(new NameValuePair(
-//		    "SSR_CLSRCH_WRK_N__ONLY_ONLINE_CMP$chk$3", ""));
-//	    nvpc.add(new NameValuePair("SSR_CLSRCH_WRK_CAMPUS$3", ""));
-//	    nvpc.add(new NameValuePair("SSR_CLSRCH_WRK_RQMNT_DESIGNTN$6", ""));
-//	    nvpc.add(new NameValuePair("SSR_CLSRCH_WRK_ACAD_CAREER$7", ""));
-//	    nvpc.add(new NameValuePair("SSR_CLSRCH_WRK_SSR_OPEN_ONLY$chk$8",
-//		    "Y"));
-//	    nvpc.add(new NameValuePair("SSR_CLSRCH_WRK_SSR_OPEN_ONLY$8", "Y"));
-//
-//	    Collection<NameValuePair> nvrc = Util.makeArrayList(2);
-//	    // nvrc.add(new NameValuePair(
-//	    // "N__SR_CLASS_WRK_N__ONLY_ONLINE_CMP$chk", "")) ;
-//	    // nvrc.add(new NameValuePair(
-//	    // "CLASS_SRCH_WRK2_SSR_OPEN_ONLY$chk", "")) ;
-//	    WebPage wp = getPage(getUrl(), nvpc, nvrc);
-//	    // fb.log(wp) ;
-//	    // for (String s : wp.getLines()) {
-//	    // fb.log(s) ;
-//	    // }
-//	    Parser parser = new Parser();
-//	    DeptCH ch = new DeptCH(session);
-//	    parser.setContentHandler(ch);
-//	    try {
-//		parser.parse(makeWebPageInputSource(wp));
-//	    } catch (IOException e) {
-//		e.printStackTrace();
-//	    } catch (SAXException e) {
-//		e.printStackTrace();
-//	    }
-//	    departments.addAll(ch.getDepartments());
-//	    return wp;
-//	}
-
-	/**
-	 * @return the url
-	 */
-//	public String getUrl() {
-//	    return url;
-//	}
-//    }
 
 
     @Override
@@ -778,7 +648,8 @@ public class SmartMeterTexasDataCollector {
     
     /*
      * javadocs for HttpClient are at 
-     * http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/index.html
+     * http://hc.apache.org/httpcomponents-client-ga/
+     *                                            httpclient/apidocs/index.html
      * 
      * (for some version of the files).
      */
@@ -797,8 +668,7 @@ public class SmartMeterTexasDataCollector {
 	 */
 	
 	private Date date;
-	private static final String msgDown = "The application server "
-		+ "is down at this time.";
+	private static final String msgDown = "No results found." ;
 
 	@SuppressWarnings("unused")
 	private GetData() {} // No available no-argument constructor.
@@ -851,13 +721,16 @@ public class SmartMeterTexasDataCollector {
 	    private void login() {
 		List <NameValuePair> nameValuePairs = new ArrayList<>() ;
 
-		getPage("https://www.smartmetertexas.com:443/CAP/public/") ; // 91
+		getPage(
+			"https://www.smartmetertexas.com:443/CAP/public/"
+			) ; // 91
 		
 		nameValuePairs.add(new NameValuePair("pass_dup", "")) ;
 		nameValuePairs.add(new NameValuePair("username", "VAJ4088")) ;
 		nameValuePairs.add(new NameValuePair("password", "bri2bri")) ;
 		nameValuePairs.add(new NameValuePair("buttonName", "")) ;
-		nameValuePairs.add(new NameValuePair("login-form-type", "pwd")) ;
+		nameValuePairs.add(new NameValuePair(
+			"login-form-type", "pwd")) ;
 		WebPage wp =
 		getPage("https://www.smartmetertexas.com:443/pkmslogin.form",
 			nameValuePairs,
@@ -871,10 +744,11 @@ public class SmartMeterTexasDataCollector {
 		 *  91 GET - may not be needed, but sets some cookies.
 		 * 114 POST- sets some cookies and leads to 115 automatically.
 		 *  Page data is
-	  pass_dup=&username=VAJ4088&password=bri2bri&buttonName=&login-form-type=pwd
+   pass_dup=&username=VAJ4088&password=bri2bri&buttonName=&login-form-type=pwd
 		 *  Response is
 		 *  302 Moved Temporarily
-		 * 115 GET - sets some cookies and probably leads to 116 automatically.
+		 * 115 GET - sets some cookies and probably 
+		 *  leads to 116 automatically.
 		 *  Response is
 		 *  302 Found
 		 * 116 GET - sets some cookies. 
@@ -971,6 +845,26 @@ public class SmartMeterTexasDataCollector {
 	    } else {
 		/*
 		 * NOW : GET THE DATA !!!
+		 */
+		/*
+		 * Look for
+		 * 
+		 * <SPAN name="ViewDailyUsage_RowSet_Row_column8">25407.133</SPAN></TD>
+		 * 
+		 * where
+		 * 
+		 * <SPAN name="ViewDailyUsage_RowSet_Row_column8">
+		 * 
+		 * preceeds the data, and
+		 * 
+		 * </SPAN></TD>
+		 * 
+		 * follows the data, and the data
+		 * 
+		 * 25407.133
+		 * 
+		 * is truncated to 25407
+		 * 
 		 */
 	    }
 	    /*
