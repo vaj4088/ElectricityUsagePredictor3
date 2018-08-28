@@ -4,6 +4,7 @@ package eup;
  */
 
 
+import java.awt.Color;
 import java.awt.GraphicsConfiguration;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -152,9 +153,8 @@ implements ActionListener {
 		    + " while setting Look and Feel.");
 	}
 	
-	//  Create three horizontal boxes, one above the other above the other.
-	//  The upper box will be used for date pickers.
-	//  (The middle box could be used for selecting meter readings.)
+	//  Create two horizontal boxes, one above the other.
+	//  The upper box will be used for date pickers and a button.
 	//  The bottom box will be used for the operations log and
 	//    will get set up first.
 	//
@@ -162,12 +162,11 @@ implements ActionListener {
 	//  Pennywise Power used the "Start Read" reading on a "Date",
 	//  (from smartmetertexas.com)
 	//  truncated to an integer.
+	//  So does Energy Express.
 	//
 	Box vbox  = Box.createVerticalBox() ;
 	Box hbox1 = Box.createHorizontalBox() ;
 	vbox.add(hbox1) ;
-//	Box hbox2 = Box.createHorizontalBox() ;
-//	vbox.add(hbox2) ;
 	Box hbox3 = Box.createHorizontalBox() ;
 	vbox.add(hbox3) ;
 
@@ -224,15 +223,21 @@ implements ActionListener {
 				BorderFactory.createEmptyBorder(5, 5, 5, 5)),
 				datePickerNextBillDate.getBorder()));
 	hbox1.add(datePickerNextBillDate) ;
+	
+	JButton jb = new JButton("GO (execute)") ; 
+	jb.setBackground(Color.GREEN) ;
+	jb.setForeground(Color.WHITE) ;
+	hbox1.add(jb) ;
 
 	add(vbox) ;
 	pack();
 	fb.log("Making visible.", Feedbacker.TO_FILE + 
 		Feedbacker.TO_GUI);
 	setVisible(true);
-	datePickerCurrentBillDate.addActionListener(this) ;
-	datePickerCurrentDate.    addActionListener(this) ;
-	datePickerNextBillDate.   addActionListener(this) ;
+//	datePickerCurrentBillDate.addActionListener(this) ;
+//	datePickerCurrentDate.    addActionListener(this) ;
+//	datePickerNextBillDate.   addActionListener(this) ;
+	jb.                       addActionListener(this) ;
     } 
 
     /**
@@ -304,7 +309,7 @@ implements ActionListener {
     
     @Override
     public void actionPerformed(ActionEvent ae) {
- 	System.out.println("Action Event " + ae.toString()) ;
+ 	msg("Action Event " + ae.toString()) ;
  	ElectricityUsagePredictor gui = gui2.get() ;
  	JDatePickerImpl dPCBD = gui.datePickerCurrentBillDate ;
  	JDatePickerImpl dPCD  = gui.datePickerCurrentDate ;
@@ -312,6 +317,8 @@ implements ActionListener {
  	Date cBD = (Date) dPCBD.getModel().getValue() ;
  	Date cD  = (Date)  dPCD.getModel().getValue() ;
  	Date nBD = (Date) dPNBD.getModel().getValue() ;
+// 	int cBMR = (new SmartMeterTexasDataCollector(cBD)).getReading ;
+// 	int cMR  = (new SmartMeterTexasDataCollector(cD )).getReading ;
  	Predictor predictor = new Predictor.Builder().
  		currentBillDate(cBD.toInstant().
  			atZone(ZoneId.systemDefault()).toLocalDate()).
@@ -321,20 +328,20 @@ implements ActionListener {
  		currentMeterReading(25189).
  		nextBillDate(nBD.toInstant().
  			atZone(ZoneId.systemDefault()).toLocalDate()).
- 		build() ;
- 	System.out.println() ;
- 	System.out.print("Current Bill Date: ") ;
- 	System.out.println(predictor.getDateBillCurrent()) ;
- 	System.out.print("Current Bill Meter Reading: ") ;
- 	System.out.println(predictor.getMeterReadingBillCurrent()) ;
- 	System.out.println() ;
- 	System.out.print("Current      Date   : ") ;
- 	System.out.println(predictor.getDateCurrent()) ;
- 	System.out.print("Current     Meter Reading : ") ;
- 	System.out.println(predictor.getMeterReadingCurrent()) ;
- 	System.out.println() ;
- 	System.out.print("Next    Bill Date   : ") ;
- 	System.out.println(predictor.getDateBillNext()) ;
+		build();
+	msg("");
+	msgNoNewline("Current Bill Date: ");
+	msg(predictor.getDateBillCurrent());
+	msgNoNewline("Current Bill Meter Reading: ");
+	msg(predictor.getMeterReadingBillCurrent());
+	msg("");
+	msgNoNewline("Current      Date   : ");
+	msg(predictor.getDateCurrent());
+	msgNoNewline("Current     Meter Reading : ");
+	msg(predictor.getMeterReadingCurrent());
+	msg("");
+	msgNoNewline("Next    Bill Date   : ");
+	msg(predictor.getDateBillNext());
  	int predictedUsage = predictor.predictUsage() ;
  	PrintStream where = System.err ;
  	if ((predictedUsage>=500) && (predictedUsage<=1000)) {
@@ -342,12 +349,73 @@ implements ActionListener {
  	}
  	where.print("Predicted   Usage : ") ;
  	where.println(predictedUsage) ;
- 	System.out.println() ;
- 	System.out.println(">> "+predictor.getDateBillCurrent().toString()) ;
+ 	msg("") ;
+ 	msg(">> "+predictor.getDateBillCurrent().toString()) ;
      }
 
-
-
+    /**
+     * A convenience method for displaying a line of text on System.out.
+     * 
+     * @param ob
+     *            An <tt>Object</tt> or a <tt>String</tt> to be displayed on
+     *            System.out. If an <tt>Object</tt>, its toString() method will
+     *            be called.
+     */
+    void msg(Object ob) {
+	if (null == fb) {
+	    System.out.println(ob);
+	} else {
+	    fb.log(ob, Feedbacker.TO_OUT + Feedbacker.TO_FILE);
+	}
+    }
+    
+    /**
+     * A convenience method for displaying a line of text on System.out.
+     * 
+     * @param ob
+     *            An <tt>int</tt> to be displayed on
+     *            System.out.
+     */
+    void msg(int ob) {
+	msg(Integer.toString(ob)) ;
+    }
+    
+    /**
+     * A convenience method for displaying a line of text on System.out but
+     * without a newline.
+     * 
+     * @param ob
+     *            An <tt>Object</tt> or a <tt>String</tt> to be displayed on
+     *            System.out. If an <tt>Object</tt>, its toString() method will
+     *            be called.
+     */
+    void msgNoNewline(Object ob) {
+	if (null == fb) {
+	    System.out.print(ob);
+	} else {
+	    fb.logBare(ob, Feedbacker.TO_OUT + Feedbacker.TO_FILE);
+	}
+    }
+    
+    /**
+     * A convenience method for displaying a line of text on System.out
+     * using the Event Dispatch Thread.
+     * 
+     * @param ob
+     *            An <tt>Object</tt> or a <tt>String</tt> to be displayed on
+     *            System.out. If an <tt>Object</tt>, its toString() method will
+     *            be called.
+     */
+    void msgEDT(Object ob) {
+	javax.swing.SwingUtilities.invokeLater(new Runnable() {
+	    @Override
+	    public void run() {
+		msg(ob) ;
+	    }
+	    
+	});
+    }
+    
     class DateLabelFormatter extends AbstractFormatter {
 
 	/**

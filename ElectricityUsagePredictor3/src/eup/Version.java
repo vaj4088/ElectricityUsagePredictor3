@@ -19,8 +19,8 @@ public final class Version<T> implements Serializable, Comparable<T> {
      *  
      */
     private static final String VERSION = "Revised on"
-	    + " Date: 2018-08-26"
-	    + " at 1935"
+	    + " Date: 2018-08-27"
+	    + " at 1937"
 	    + " via manual intervention.";
     private static final long serialVersionUID = 1L;
     private static final Version<String> INSTANCE = new Version<String>();
