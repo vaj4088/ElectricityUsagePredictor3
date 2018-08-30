@@ -647,45 +647,68 @@ public class SmartMeterTexasDataCollector {
     }
     
     /*
-     * javadocs for HttpClient are at 
+     * javadocs for HttpClient are at
      * http://hc.apache.org/httpcomponents-client-ga/
-     *                                            httpclient/apidocs/index.html
+     * httpclient/apidocs/index.html
      * 
      * (for some version of the files).
      */
-    
+
     class GetData extends Thread {
 	/*
-	 
-	 To use this class, do:
-	 
-	 (new GetData()).start() ;
-	 
-	 may need to do:  (new SmartMeterTexasDataCollector.GetData()).start() ;
-	 
-	 except that the GetData constructor needs a parameter.
-	 
+	 * 
+	 * To use this class, do:
+	 * 
+	 * (new GetData()).start() ;
+	 * 
+	 * may need to do: (new SmartMeterTexasDataCollector.GetData()).start()
+	 * ;
+	 * 
+	 * except that the GetData constructor needs a parameter.
+	 * 
 	 */
+
+	/*
+	 * Some fields are volatile due to access from multiple threads.
+	 */
+	private volatile Date date ; 
+	private volatile int startRead ;
+	private volatile boolean startReadValid = false ;
+	private volatile int endRead ;
+	private volatile boolean endReadValid = false ;
 	
-	private Date date;
-	private static final String msgDown = "No results found." ;
+	private static final String msgDown = "No results found.";
+	private static final String fromStringStartRead  = 
+		"<SPAN name=\"ViewDailyUsage_RowSet_Row_column7\">" ;
+	private static final String toStringStartRead = 
+		"</SPAN></TD>" ;
+	private static final String fromStringEndRead  = 
+		"<SPAN name=\"ViewDailyUsage_RowSet_Row_column8\">" ;
+	private static final String toStringEndRead = 
+		"</SPAN></TD>" ;
+	
+	/*
+	 * To find Start of Day Meter Reading, use
+	 * 
+	 * <SPAN name="ViewDailyUsage_RowSet_Row_column7">
+	 * 
+	 */
 
 	@SuppressWarnings("unused")
-	private GetData() {} // No available no-argument constructor.
-	
+	private GetData() {
+	} // No available no-argument constructor.
+
 	public GetData(Date date) {
-	    this.date = date ;
+	    this.date = date;
 	}
-	
+
 	private String extractAddressFromLogin(WebPage wp) {
 	    String startFrom1 = "_f.action = &quot;/";
 	    String startFrom2 = "/";
 	    String goTo = "#";
 	    WPLocation wpl = wp.indexOf(startFrom1);
 	    assertGoodLocation(wpl);
-	    wpl = wp.indexOf(startFrom2, 
-		    wpl.getLine(),
-		    wpl.getColumn());
+	    wpl = wp.indexOf(startFrom2, wpl.getLine(), wpl.getColumn());
 	    assertGoodLocation(wpl);
 	    wpl = wp.indexOf(startFrom2, wpl.getLine(), wpl.getColumn());
 	    assertGoodLocation(wpl);
@@ -695,11 +718,11 @@ public class SmartMeterTexasDataCollector {
 	    msg("New suffix from login: " + s + " .");
 	    return s;
 	}
-	    
+
 	private String extractAddressFromGetData(WebPage wp) {
 	    String startFrom1 = "<div id=\"banner_logout\">";
 	    String startFrom2 = "href='";
-	    String startFrom3 = "/" ;
+	    String startFrom3 = "/";
 	    String goTo = "'";
 	    WPLocation wpl = wp.indexOf(startFrom1);
 	    assertGoodLocation(wpl);
@@ -712,88 +735,85 @@ public class SmartMeterTexasDataCollector {
 	    String s = wp.subString(wpl, startFrom3, goTo);
 	    msg("New suffix from Get Data: " + s + " .");
 	    return s;
-	    }
-	    
-	    private void assertGoodLocation(WPLocation wpl) {
-		if (wpl.getLine()<0) throw new Error("Bad location.") ;
-	    }
-	    
-	    private void login() {
-		List <NameValuePair> nameValuePairs = new ArrayList<>() ;
+	}
 
-		getPage(
-			"https://www.smartmetertexas.com:443/CAP/public/"
-			) ; // 91
-		
-		nameValuePairs.add(new NameValuePair("pass_dup", "")) ;
-		nameValuePairs.add(new NameValuePair("username", "VAJ4088")) ;
-		nameValuePairs.add(new NameValuePair("password", "bri2bri")) ;
-		nameValuePairs.add(new NameValuePair("buttonName", "")) ;
-		nameValuePairs.add(new NameValuePair(
-			"login-form-type", "pwd")) ;
-		WebPage wp =
-		getPage("https://www.smartmetertexas.com:443/pkmslogin.form",
-			nameValuePairs,
-			null) ; // 114 POST- sets some cookies and 
-		                // leads to 115 automatically.
-		/*
-		 * from
-		 * 00 - WebScarab 20180808 myexpressenergy_com Login
-		 * 
-		 * Uses these messages:
-		 *  91 GET - may not be needed, but sets some cookies.
-		 * 114 POST- sets some cookies and leads to 115 automatically.
-		 *  Page data is
-   pass_dup=&username=VAJ4088&password=bri2bri&buttonName=&login-form-type=pwd
-		 *  Response is
-		 *  302 Moved Temporarily
-		 * 115 GET - sets some cookies and probably 
-		 *  leads to 116 automatically.
-		 *  Response is
-		 *  302 Found
-		 * 116 GET - sets some cookies. 
-		 */
-		addressSuffix = extractAddressFromLogin(wp) ;
-	    }
-	    
-	    private void getData() {
-		List<NameValuePair> nameValuePairs = new ArrayList<>();
+	private boolean badLocation(WPLocation wpl) {
+	    return (wpl.getColumn() < 0 && wpl.getLine() < 0);
+	}
 
-		/*
-		 * from 00 - WebScarab 20180808 myexpressenergy_com Get Data
-		 * 
-		 * Uses these messages: 164 POST- address from ? 
-		 * Response contains some
-		 * data. Page data is
-		 * _bowStEvent=Usage%2Fportlet%2FUsageCustomerMetersPortlet%21fireEvent%
-		 * 3AForm%3AViewUsagePage_SaveDataSubmitEvent&tag_UserLocale=en&
-		 * reportType=DAILY&viewUsage_startDate=08%2F06%2F2018&viewUsage_endDate
-		 * =08%2F06%2F2018&
-		 * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e
-		 * =&
-		 * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e1
-		 * =&
-		 * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2
-		 * =&
-		 * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2=
-		 * 170 POST Response contains the data! Page Data is
-		 * _bowStEvent=Usage%2Fportlet%2FUsageCustomerMetersPortlet%21fireEvent%
-		 * 3AForm%3AViewUsagePage_SaveDataSubmitEvent&tag_UserLocale=en&
-		 * reportType=DAILY&viewUsage_startDate=08%2F01%2F2018&viewUsage_endDate
-		 * =08%2F03%2F2018&viewusage_but_updaterpt=Update+Report&
-		 * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e
-		 * =&
-		 * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e1
-		 * =&
-		 * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2
-		 * =&
-		 * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2=
-		 * 
-		 */
-		
-		//
-		// Preparing to do POST 164
-		//
+	private void assertGoodLocation(WPLocation wpl) {
+	    if (badLocation(wpl))
+		throw new AssertionError("Bad location.");
+	}
+
+	private void login() {
+	    List<NameValuePair> nameValuePairs = new ArrayList<>();
+
+	    getPage("https://www.smartmetertexas.com:443/CAP/public/"); // 91
+
+	    nameValuePairs.add(new NameValuePair("pass_dup", ""));
+	    nameValuePairs.add(new NameValuePair("username", "VAJ4088"));
+	    nameValuePairs.add(new NameValuePair("password", "bri2bri"));
+	    nameValuePairs.add(new NameValuePair("buttonName", ""));
+	    nameValuePairs.add(new NameValuePair("login-form-type", "pwd"));
+	    WebPage wp = getPage(
+		    "https://www.smartmetertexas.com:443/pkmslogin.form",
+		    nameValuePairs, null); // 114 POST- sets some cookies and
+					   // leads to 115 automatically.
+	    /*
+	     * from 00 - WebScarab 20180808 myexpressenergy_com Login
+	     * 
+	     * Uses these messages: 91 GET - may not be needed, but sets some
+	     * cookies. 114 POST- sets some cookies and leads to 115
+	     * automatically. Page data is
+	     * pass_dup=&username=VAJ4088&password=bri2bri&buttonName=&login-
+	     * form-type=pwd Response is 302 Moved Temporarily 115 GET - sets
+	     * some cookies and probably leads to 116 automatically. Response is
+	     * 302 Found 116 GET - sets some cookies.
+	     */
+	    addressSuffix = extractAddressFromLogin(wp);
+	}
+
+	private void getData() {
+	    List<NameValuePair> nameValuePairs = new ArrayList<>();
+
+	    /*
+	     * from 00 - WebScarab 20180808 myexpressenergy_com Get Data
+	     * 
+	     * Uses these messages: 164 POST- address from ? Response contains
+	     * some data. Page data is
+	     * _bowStEvent=Usage%2Fportlet%2FUsageCustomerMetersPortlet%
+	     * 21fireEvent%
+	     * 3AForm%3AViewUsagePage_SaveDataSubmitEvent&tag_UserLocale=en&
+	     * reportType=DAILY&viewUsage_startDate=08%2F06%2F2018&
+	     * viewUsage_endDate =08%2F06%2F2018&
+	     * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e
+	     * =&
+	     * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e1
+	     * =&
+	     * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2
+	     * =&
+	     * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2=
+	     * 170 POST Response contains the data! Page Data is
+	     * _bowStEvent=Usage%2Fportlet%2FUsageCustomerMetersPortlet%
+	     * 21fireEvent%
+	     * 3AForm%3AViewUsagePage_SaveDataSubmitEvent&tag_UserLocale=en&
+	     * reportType=DAILY&viewUsage_startDate=08%2F01%2F2018&
+	     * viewUsage_endDate
+	     * =08%2F03%2F2018&viewusage_but_updaterpt=Update+Report&
+	     * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e
+	     * =&
+	     * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e1
+	     * =&
+	     * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2
+	     * =&
+	     * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2=
+	     * 
+	     */
+
+	    //
+	    // Preparing to do POST 164
+	    //
 	    nameValuePairs.add(new NameValuePair("_bowStEvent",
 		    "Usage%2Fportlet%2FUsageCustomerMetersPortlet%21fireEvent"
 			    + "%3AForm%3AViewUsagePage_SaveDataSubmitEvent"));
@@ -803,33 +823,26 @@ public class SmartMeterTexasDataCollector {
 		    new NameValuePair("viewUsage_startDate", "08%2F01%2F2018"));
 	    nameValuePairs.add(
 		    new NameValuePair("viewUsage_endDate", "08%2F03%2F2018"));
-	    nameValuePairs.add(
-		    new NameValuePair(
-			    "_bst_locator_Usage_00215portlet"
-				    + "_00215UsageCustomerMetersPortlet"
-				    + "_00515ResidentialC"
-				    + "_00515Default_00515Default"
-				    + "_00515Default"
-				    + "_00515Esiid_005151651b3535a4_00515b6e7e",
-			    ""));
-	    nameValuePairs.add(
-		    new NameValuePair(
-			    "_bst_locator_Usage_00215portlet"
-				    + "_00215UsageCustomerMetersPortlet"
-				    + "_00515ResidentialC"
-				    + "_00515Default_00515Default_00515Default"
-				    + "_00515Esiid"
-				    + "_005151651b3535a4_00515b6e7e1",
-			    ""));
-	    nameValuePairs.add(
-		    new NameValuePair(
-			    "_bst_locator_Usage_00215portlet"
-				    + "_00215UsageCustomerMetersPortlet"
-				    + "_00515ResidentialC"
-				    + "_00515Default_00515Default_00515Default"
-				    + "_00515Esiid"
-				    + "_005151651b3535a4_00515b6e7e2",
-			    ""));
+	    nameValuePairs
+		    .add(new NameValuePair("_bst_locator_Usage_00215portlet"
+			    + "_00215UsageCustomerMetersPortlet"
+			    + "_00515ResidentialC"
+			    + "_00515Default_00515Default" + "_00515Default"
+			    + "_00515Esiid_005151651b3535a4_00515b6e7e", ""));
+	    nameValuePairs.add(new NameValuePair(
+		    "_bst_locator_Usage_00215portlet"
+			    + "_00215UsageCustomerMetersPortlet"
+			    + "_00515ResidentialC"
+			    + "_00515Default_00515Default_00515Default"
+			    + "_00515Esiid" + "_005151651b3535a4_00515b6e7e1",
+		    ""));
+	    nameValuePairs.add(new NameValuePair(
+		    "_bst_locator_Usage_00215portlet"
+			    + "_00215UsageCustomerMetersPortlet"
+			    + "_00515ResidentialC"
+			    + "_00515Default_00515Default_00515Default"
+			    + "_00515Esiid" + "_005151651b3535a4_00515b6e7e2",
+		    ""));
 	    WebPage wp = getPage(
 		    "https://www.smartmetertexas.com:443" + addressSuffix,
 		    nameValuePairs, null);
@@ -837,7 +850,9 @@ public class SmartMeterTexasDataCollector {
 	    // Check that there really is data.
 	    //
 	    WPLocation serverDown = wp.indexOf(msgDown);
-	    if ((serverDown.getLine() > -1) && (serverDown.getColumn() > -1)) {
+	    if (!badLocation(serverDown)) {
+		startReadValid = false ;
+		endReadValid   = false ;
 		fb.log("No predicting is possible now, "
 			+ "please try again later.",
 			Feedbacker.TO_FILE + Feedbacker.TO_GUI
@@ -849,11 +864,13 @@ public class SmartMeterTexasDataCollector {
 		/*
 		 * Look for
 		 * 
-		 * <SPAN name="ViewDailyUsage_RowSet_Row_column8">25407.133</SPAN></TD>
+		 * <SPAN
+		 * name="ViewDailyUsage_RowSet_Row_column7">25407.133</SPAN></
+		 * TD>
 		 * 
 		 * where
 		 * 
-		 * <SPAN name="ViewDailyUsage_RowSet_Row_column8">
+		 * <SPAN name="ViewDailyUsage_RowSet_Row_column7">
 		 * 
 		 * preceeds the data, and
 		 * 
@@ -866,6 +883,21 @@ public class SmartMeterTexasDataCollector {
 		 * is truncated to 25407
 		 * 
 		 */
+		WPLocation wpData = wp.indexOf(fromStringStartRead) ;
+		String dataString = wp.subString(wpData, 
+			fromStringStartRead, 
+			toStringStartRead) ;
+		float startReadFloat = Float.parseFloat(dataString) ;
+		startRead = (int) startReadFloat ;
+		startReadValid = true ;
+
+		wpData = wp.indexOf(fromStringEndRead) ;
+		dataString = wp.subString(wpData, 
+			fromStringEndRead, 
+			toStringEndRead) ;
+		float endReadFloat = Float.parseFloat(dataString) ;
+		endRead = (int) endReadFloat ;
+		endReadValid = true ;
 	    }
 	    /*
 	     * NOW : GET THE NEW addressSuffix !!!
@@ -873,29 +905,64 @@ public class SmartMeterTexasDataCollector {
 	    addressSuffix = extractAddressFromGetData(wp);
 	}
 
-	    private void logout() {
-		//
-		// Conversation 173 GET - sets some cookies.
-		//
-		getPage("https://www.smartmetertexas.com:443" + addressSuffix) ;
-		//
-		// Conversation 174 GET - sets some cookies.
-		//
-		getPage("https://www.smartmetertexas.com:443/pkmslogout?" +
-		"filename=SMTLogout.html&type=public&lang=en") ;
-		//
-		// Conversation 175 GET - sets some cookies.
-		//
-		getPage("https://www.smartmetertexas.com:443/CAP/public") ;
-		// Response is
-		// 301 Moved Permanently, which automatically causes 176.
-	    }
-	    
-	    @Override
-	    public void run() {
-		login() ;
-		getData() ;
-		logout() ;
-	    }
+	private void logout() {
+	    //
+	    // Conversation 173 GET - sets some cookies.
+	    //
+	    getPage("https://www.smartmetertexas.com:443" + addressSuffix);
+	    //
+	    // Conversation 174 GET - sets some cookies.
+	    //
+	    getPage("https://www.smartmetertexas.com:443/pkmslogout?"
+		    + "filename=SMTLogout.html&type=public&lang=en");
+	    //
+	    // Conversation 175 GET - sets some cookies.
+	    //
+	    getPage("https://www.smartmetertexas.com:443/CAP/public");
+	    // Response is
+	    // 301 Moved Permanently, which automatically causes 176.
+	}
+
+	@Override
+	public void run() {
+	    login();
+	    getData();
+	    logout();
+	}
+
+	/**
+	 * @return the date
+	 */
+	public Date getDate() {
+	    return date;
+	}
+
+	/**
+	 * @return the startRead
+	 */
+	public int getStartRead() {
+	    return startRead;
+	}
+
+	/**
+	 * @return the startReadValid
+	 */
+	public boolean isStartReadValid() {
+	    return startReadValid;
+	}
+
+	/**
+	 * @return the endRead
+	 */
+	public int getEndRead() {
+	    return endRead;
+	}
+
+	/**
+	 * @return the endReadValid
+	 */
+	public boolean isEndReadValid() {
+	    return endReadValid;
+	}
     }
 }
