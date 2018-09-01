@@ -5,6 +5,7 @@ package eup;
 
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.GraphicsConfiguration;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -15,6 +16,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Properties;
@@ -224,9 +226,9 @@ implements ActionListener {
 				datePickerNextBillDate.getBorder()));
 	hbox1.add(datePickerNextBillDate) ;
 	
-	JButton jb = new JButton("GO (execute)") ; 
+	JButton jb = new JButton("GO (predict)") ; 
 	jb.setBackground(Color.GREEN) ;
-	jb.setForeground(Color.WHITE) ;
+	jb.setFont(jb.getFont().deriveFont(Font.BOLD)) ;
 	hbox1.add(jb) ;
 
 	add(vbox) ;
@@ -305,6 +307,13 @@ implements ActionListener {
 	    e.printStackTrace();
 	    // Now allow the main thread to exit.
 	}
+	LocalDate date = LocalDate.of(2018, 8, 1) ;
+	DateTimeFormatter dTF = 
+		DateTimeFormatter.ofPattern("MM'%2F'dd'%2F'yyyy") ;
+	String s = date.format(dTF) ;
+	s = "The date of 20180801 has been formatted as " + s ;
+	ElectricityUsagePredictor gui = gui2.get() ; 
+	gui.msgEDT(s) ;
     }
     
     @Override

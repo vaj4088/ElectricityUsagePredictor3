@@ -820,9 +820,9 @@ public class SmartMeterTexasDataCollector {
 	    nameValuePairs.add(new NameValuePair("tag_UserLocale", "en"));
 	    nameValuePairs.add(new NameValuePair("reportType", "DAILY"));
 	    nameValuePairs.add(
-		    new NameValuePair("viewUsage_startDate", "08%2F01%2F2018"));
+		    new NameValuePair("viewUsage_startDate", "08%2F01%2F2018")); // <<<<<<<<<<<< Class DateTimeFormatter "MM'%2F'dd'%2F'yyyy"
 	    nameValuePairs.add(
-		    new NameValuePair("viewUsage_endDate", "08%2F03%2F2018"));
+		    new NameValuePair("viewUsage_endDate", "08%2F03%2F2018")) ;  // <<<<<<<<<<<< Class DateTimeFormatter "MM'%2F'dd'%2F'yyyy"
 	    nameValuePairs
 		    .add(new NameValuePair("_bst_locator_Usage_00215portlet"
 			    + "_00215UsageCustomerMetersPortlet"
