@@ -11,9 +11,10 @@ import webPage.WebPage;
 import java.awt.Container;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -671,7 +672,7 @@ public class SmartMeterTexasDataCollector {
 	/*
 	 * Some fields are volatile due to access from multiple threads.
 	 */
-	private volatile Date date ; 
+	private volatile LocalDate date ; 
 	private volatile int startRead ;
 	private volatile boolean startReadValid = false ;
 	private volatile int endRead ;
@@ -698,7 +699,7 @@ public class SmartMeterTexasDataCollector {
 	private GetData() {
 	} // No available no-argument constructor.
 
-	public GetData(Date date) {
+	public GetData(LocalDate date) {
 	    this.date = date;
 	}
 
@@ -819,10 +820,17 @@ public class SmartMeterTexasDataCollector {
 			    + "%3AForm%3AViewUsagePage_SaveDataSubmitEvent"));
 	    nameValuePairs.add(new NameValuePair("tag_UserLocale", "en"));
 	    nameValuePairs.add(new NameValuePair("reportType", "DAILY"));
+	    DateTimeFormatter dtf = 
+		    DateTimeFormatter.ofPattern("MM'%2F'dd'%2F'yyyy") ;
+	    String dateString = date.format(dtf) ;
+//	    nameValuePairs.add(
+//		    new NameValuePair("viewUsage_startDate", "08%2F01%2F2018")); // <<<<<<<<<<<< Class DateTimeFormatter "MM'%2F'dd'%2F'yyyy"
+//	    nameValuePairs.add(
+//		    new NameValuePair("viewUsage_endDate", "08%2F03%2F2018")) ;  // <<<<<<<<<<<< Class DateTimeFormatter "MM'%2F'dd'%2F'yyyy"
 	    nameValuePairs.add(
-		    new NameValuePair("viewUsage_startDate", "08%2F01%2F2018")); // <<<<<<<<<<<< Class DateTimeFormatter "MM'%2F'dd'%2F'yyyy"
+		    new NameValuePair("viewUsage_startDate", dateString)) ; // <<<<<<<<<<<< Class DateTimeFormatter "MM'%2F'dd'%2F'yyyy"
 	    nameValuePairs.add(
-		    new NameValuePair("viewUsage_endDate", "08%2F03%2F2018")) ;  // <<<<<<<<<<<< Class DateTimeFormatter "MM'%2F'dd'%2F'yyyy"
+		    new NameValuePair("viewUsage_endDate"  , dateString)) ; // <<<<<<<<<<<< Class DateTimeFormatter "MM'%2F'dd'%2F'yyyy"
 	    nameValuePairs
 		    .add(new NameValuePair("_bst_locator_Usage_00215portlet"
 			    + "_00215UsageCustomerMetersPortlet"
@@ -933,7 +941,7 @@ public class SmartMeterTexasDataCollector {
 	/**
 	 * @return the date
 	 */
-	public Date getDate() {
+	public LocalDate getDate() {
 	    return date;
 	}
 
