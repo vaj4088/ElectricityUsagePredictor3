@@ -57,7 +57,7 @@ public class SmartMeterTexasDataCollector {
     private boolean displayPostParameters = false;
 
     /**
-     * No-argument constructor for getting Smart Meter of Texas  information for
+     * No-argument constructor for getting Smart Meter of Texas  information
      * from my electrical meter.
      */
     public SmartMeterTexasDataCollector() {

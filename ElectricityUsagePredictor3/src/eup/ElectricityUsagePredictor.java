@@ -326,15 +326,17 @@ implements ActionListener {
  	Date cBD = (Date) dPCBD.getModel().getValue() ;
  	Date cD  = (Date)  dPCD.getModel().getValue() ;
  	Date nBD = (Date) dPNBD.getModel().getValue() ;
-// 	int cBMR = (new SmartMeterTexasDataCollector(cBD)).getReading ;
-// 	int cMR  = (new SmartMeterTexasDataCollector(cD )).getReading ;
+ 	SmartMeterTexasDataCollector smtdc = 
+ 		new SmartMeterTexasDataCollector() ;
+ 	int currentBillMeterReading = (smtdc.new GetData(cD)).getStartRead() ;
+ 	int currentMeterReading = (smtdc.new GetData(cBD)).getStartRead() ;
  	Predictor predictor = new Predictor.Builder().
  		currentBillDate(cBD.toInstant().
  			atZone(ZoneId.systemDefault()).toLocalDate()).
- 		currentBillMeterReading(24512).
+ 		currentBillMeterReading(currentBillMeterReading).
  		currentDate(cD.toInstant().
  			atZone(ZoneId.systemDefault()).toLocalDate()).
- 		currentMeterReading(25189).
+ 		currentMeterReading(currentMeterReading).
  		nextBillDate(nBD.toInstant().
  			atZone(ZoneId.systemDefault()).toLocalDate()).
 		build();
