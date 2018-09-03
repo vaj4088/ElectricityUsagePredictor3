@@ -662,7 +662,7 @@ public class SmartMeterTexasDataCollector {
 	 * 
 	 * (new GetData()).start() ;
 	 * 
-	 * may need to do: (new SmartMeterTexasDataCollector.GetData()).start()
+	 * may need to do: (SmartMeterTexasDataCollector.new GetData()).start()
 	 * ;
 	 * 
 	 * except that the GetData constructor needs a parameter.
@@ -674,9 +674,10 @@ public class SmartMeterTexasDataCollector {
 	 */
 	private volatile LocalDate date ; 
 	private volatile int startRead ;
-	private volatile boolean startReadValid = false ;
 	private volatile int endRead ;
-	private volatile boolean endReadValid = false ;
+	private volatile boolean dataValid = false ;
+	
+	private final Object lock = new Object() ;
 	
 	private static final String msgDown = "No results found.";
 	private static final String fromStringStartRead  = 
@@ -859,12 +860,13 @@ public class SmartMeterTexasDataCollector {
 	    //
 	    WPLocation serverDown = wp.indexOf(msgDown);
 	    if (!badLocation(serverDown)) {
-		startReadValid = false ;
-		endReadValid   = false ;
+		synchronized(lock) {
+		    dataValid = false ;
+		}
 		fb.log("No predicting is possible now, "
 			+ "please try again later.",
 			Feedbacker.TO_FILE + Feedbacker.TO_GUI
-				+ Feedbacker.FLUSH);
+			+ Feedbacker.FLUSH);
 	    } else {
 		/*
 		 * NOW : GET THE DATA !!!
@@ -896,16 +898,17 @@ public class SmartMeterTexasDataCollector {
 			fromStringStartRead, 
 			toStringStartRead) ;
 		float startReadFloat = Float.parseFloat(dataString) ;
-		startRead = (int) startReadFloat ;
-		startReadValid = true ;
 
 		wpData = wp.indexOf(fromStringEndRead) ;
 		dataString = wp.subString(wpData, 
 			fromStringEndRead, 
 			toStringEndRead) ;
 		float endReadFloat = Float.parseFloat(dataString) ;
-		endRead = (int) endReadFloat ;
-		endReadValid = true ;
+		synchronized(lock) {
+		    startRead = (int) startReadFloat ;
+		    endRead   = (int) endReadFloat ;
+		    dataValid = true ;
+		}
 	    }
 	    /*
 	     * NOW : GET THE NEW addressSuffix !!!
@@ -949,28 +952,45 @@ public class SmartMeterTexasDataCollector {
 	 * @return the startRead
 	 */
 	public int getStartRead() {
-	    return startRead;
+	    int value ;
+	    boolean dv ;
+	    synchronized(lock) {
+		value = startRead ;
+		dv = dataValid ;
+	    }
+	    if (!dv) {
+		start() ;  //  Causes the run method to execute on a new Thread.
+		value = startRead ;
+	    }
+	    return value;
 	}
 
 	/**
 	 * @return the startReadValid
 	 */
-	public boolean isStartReadValid() {
-	    return startReadValid;
+	public boolean isDataValid() {
+	    boolean value ;
+	    synchronized(lock) {
+		value = dataValid ;
+	    }
+	    return value;
 	}
 
 	/**
 	 * @return the endRead
 	 */
 	public int getEndRead() {
-	    return endRead;
-	}
-
-	/**
-	 * @return the endReadValid
-	 */
-	public boolean isEndReadValid() {
-	    return endReadValid;
+	    int value ;
+	    boolean dv ;
+	    synchronized(lock) {
+		value = endRead ;
+		dv = dataValid ;
+	    }
+	    if (!dv) {
+		start() ;  //  Causes the run method to execute on a new Thread.
+		value = endRead ;
+	    }
+	    return value;
 	}
     }
 }
