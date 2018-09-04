@@ -16,7 +16,6 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Properties;
@@ -307,13 +306,14 @@ implements ActionListener {
 	    e.printStackTrace();
 	    // Now allow the main thread to exit.
 	}
-	LocalDate date = LocalDate.of(2018, 8, 1) ;
-	DateTimeFormatter dTF = 
-		DateTimeFormatter.ofPattern("MM'%2F'dd'%2F'yyyy") ;
-	String s = date.format(dTF) ;
-	s = "The date of 20180801 has been formatted as " + s ;
-	ElectricityUsagePredictor gui = gui2.get() ; 
-	gui.msgEDT(s) ;
+//	LocalDate date = LocalDate.of(2018, 8, 1) ;
+//	java.time.format.DateTimeFormatter dTF = 
+//		java.time.format.DateTimeFormatter.ofPattern(
+//	        "MM'%2F'dd'%2F'yyyy") ;
+//	String s = date.format(dTF) ;
+//	s = "The date of 20180801 has been formatted as " + s ;
+//	ElectricityUsagePredictor gui = gui2.get() ; 
+//	gui.msgEDT(s) ;
     }
     
     @Override
@@ -338,7 +338,7 @@ implements ActionListener {
  		(smtdc.new GetData(cBDLD)).getStartRead() ;
  	int currentBillMeterReading = 
  		(smtdc.new GetData(cDLD )).getStartRead() ;
- 	Predictor predictor = new Predictor.Builder().
+	Predictor predictor = new Predictor.Builder().
  		currentBillDate(cBDLD).
  		currentBillMeterReading(currentBillMeterReading).
  		currentDate(cDLD).

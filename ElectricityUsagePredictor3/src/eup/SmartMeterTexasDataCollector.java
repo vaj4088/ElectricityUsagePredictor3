@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
@@ -51,18 +52,22 @@ public class SmartMeterTexasDataCollector {
     
     // The following can be enabled to provide some debugging
     // information on System.out
-    private boolean displayResponseBody = false;
+    private boolean displayResponseBody = true;
     private boolean displayQueryOptions = false;
     private boolean displayHeadersAndFooters = false;
     private boolean displayCookies = false;
     private boolean displayPostParameters = false;
 
+    static final AtomicInteger ai = new AtomicInteger() ;
+	
     /**
      * No-argument constructor for getting Smart Meter of Texas  information
      * from my electrical meter.
      */
     public SmartMeterTexasDataCollector() {
+//	msg("SmartMeterTexasDataCollector construction start.") ;
 	client = new HttpClient();
+//	msg("SmartMeterTexasDataCollector construction end.") ;
     }
 
     /**
@@ -637,7 +642,7 @@ public class SmartMeterTexasDataCollector {
      *            System.out. If an <tt>Object</tt>, its toString() method will
      *            be called.
      */
-    private void msgEDT(Object ob) {
+    void msgEDT(Object ob) {
 	javax.swing.SwingUtilities.invokeLater(new Runnable() {
 	    @Override
 	    public void run() {
@@ -701,7 +706,9 @@ public class SmartMeterTexasDataCollector {
 	} // No available no-argument constructor.
 
 	public GetData(LocalDate date) {
+//		msg("GetData construction start.") ;
 	    this.date = date;
+//		msg("GetData construction end.") ;
 	}
 
 	private String extractAddressFromLogin(WebPage wp) {
@@ -936,8 +943,11 @@ public class SmartMeterTexasDataCollector {
 
 	@Override
 	public void run() {
+	    msg("GetData run about to login() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
 	    login();
+	    msg("GetData run about to getData() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
 	    getData();
+	    msg("GetData run about to logout() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
 	    logout();
 	}
 
@@ -959,7 +969,9 @@ public class SmartMeterTexasDataCollector {
 		dv = dataValid ;
 	    }
 	    if (!dv) {
+		msg("getStartRead about to start().") ;
 		start() ;  //  Causes the run method to execute on a new Thread.
+		msg("getStartRead after start().") ;
 		value = startRead ;
 	    }
 	    return value;
