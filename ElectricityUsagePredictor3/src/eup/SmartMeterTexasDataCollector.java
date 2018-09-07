@@ -85,8 +85,7 @@ public class SmartMeterTexasDataCollector {
 	// Create a method instance.
 	GetMethod method = new GetMethod(url);
 	//
-	// 3 Nov 2012 - Be lenient about cookies. NAU cookies violate
-	// RFC 2109 and cause a warning.
+	// 3 Nov 2012 - Be lenient about cookies.
 	//
 	method.getParams().setCookiePolicy(CookiePolicy.BROWSER_COMPATIBILITY);
 	wp = requestResponse(method);
@@ -970,7 +969,10 @@ public class SmartMeterTexasDataCollector {
 	    }
 	    if (!dv) {
 		msg("getStartRead about to start().") ;
-		start() ;  //  Causes the run method to execute on a new Thread.
+		/*
+		 * start() ;  //  Causes the run method to execute on a new Thread.
+		 */
+		run() ;
 		msg("getStartRead after start().") ;
 		value = startRead ;
 	    }
