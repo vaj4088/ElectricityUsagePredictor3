@@ -81,7 +81,7 @@ public class SmartMeterTexasDataCollector {
      *         page.
      */
     public WebPage getPage(String url) {
-	WebPage wp = null;
+	WebPage wp ;
 	// Create a method instance.
 	GetMethod method = new GetMethod(url);
 	//
@@ -642,13 +642,15 @@ public class SmartMeterTexasDataCollector {
      *            be called.
      */
     void msgEDT(Object ob) {
-	javax.swing.SwingUtilities.invokeLater(new Runnable() {
-	    @Override
-	    public void run() {
-		msg(ob) ;
-	    }
-	    
-	});
+//	javax.swing.SwingUtilities.invokeLater(new Runnable() {
+//	    @Override
+//	    public void run() {
+//		msg(ob) ;
+//	    }
+//	    
+//	});
+//    }
+	msg(ob) ; 
     }
     
     /*
