@@ -712,19 +712,34 @@ public class SmartMeterTexasDataCollector {
 //		msg("GetData construction end.") ;
 	}
 
+//	private String extractAddressFromLogin(WebPage wp) {
+//	    String startFrom1 = "_f.action = &quot;/";
+//	    String startFrom2 = "/";
+//	    String goTo = "#";
+//	    WPLocation wpl = wp.indexOf(startFrom1);
+//	    assertGoodLocation(wpl);
+//	    wpl = wp.indexOf(startFrom2, wpl.getLine(), wpl.getColumn());
+//	    assertGoodLocation(wpl);
+//	    wpl = wp.indexOf(startFrom2, wpl.getLine(), wpl.getColumn());
+//	    assertGoodLocation(wpl);
+//	    WPLocation wpl2 = wp.indexOf(goTo, wpl.getLine(), wpl.getColumn());
+//	    assertGoodLocation(wpl2);
+//	    String s = wp.subString(wpl, startFrom2, goTo);
+//	    msg("New suffix from login: " + s + " .");
+//	    return s;
+//	}
+
 	private String extractAddressFromLogin(WebPage wp) {
-	    String startFrom1 = "_f.action = &quot;/";
-	    String startFrom2 = "/";
-	    String goTo = "#";
+	    String startFrom1 = ";reportType_trigger_id";
+	    String startFrom2 = "_f.action = &quot;";
+	    String goTo = "&quot;;";
 	    WPLocation wpl = wp.indexOf(startFrom1);
 	    assertGoodLocation(wpl);
-	    wpl = wp.indexOf(startFrom2, wpl.getLine(), wpl.getColumn());
-	    assertGoodLocation(wpl);
-	    wpl = wp.indexOf(startFrom2, wpl.getLine(), wpl.getColumn());
-	    assertGoodLocation(wpl);
-	    WPLocation wpl2 = wp.indexOf(goTo, wpl.getLine(), wpl.getColumn());
-	    assertGoodLocation(wpl2);
 	    String s = wp.subString(wpl, startFrom2, goTo);
+	    int commentStart = s.indexOf('#') ;
+	    if (commentStart != -1) {
+		s = s.substring(0, commentStart - 1) ;
+	    }
 	    msg("New suffix from login: " + s + " .");
 	    return s;
 	}
