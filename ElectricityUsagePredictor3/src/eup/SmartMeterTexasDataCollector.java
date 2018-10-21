@@ -5,6 +5,7 @@ import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.*;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.xml.sax.InputSource;
+
 import webPage.WPLocation;
 import webPage.WebPage;
 
@@ -15,10 +16,10 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.ListIterator;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 
@@ -57,6 +58,7 @@ public class SmartMeterTexasDataCollector {
     private boolean displayHeadersAndFooters = false;
     private boolean displayCookies = false;
     private boolean displayPostParameters = false;
+    boolean displayWebPageExtractAddressFromGetData = true ;
 
     static final AtomicInteger ai = new AtomicInteger() ;
 	
@@ -374,7 +376,95 @@ public class SmartMeterTexasDataCollector {
 //		}
 //	    }
 //	}
-	return wp;
+	return wp ;
+    }
+
+    /**
+     * A method that extracts the first form in a web page, and then extracts
+     * some fields.
+     * 
+     * This method also deals with fields where the value is missing.
+     * In such cases, an empty value is used.  Ian Shef IBS 15 Oct 2018.  This 
+     * is the Smart Meter Texas version of getHiddenFieldsInFirstForm(...).  
+     * Some of the constants have changed case (Upper Case versus Lower Case)
+     * and the type of the returned value has changed.  
+     * Ian Shef  IBS  17 Oct 2018
+     * 
+     * @param wp
+     *            The WebPage from which to extract the fields.
+     * @return ArrayList<NameValuePair> of the name and the value of each
+     *         desired field found.
+     */
+    public static List<NameValuePair> 
+    getSomeFieldsInFirstFormSMT(WebPage wpInput) {
+	final String FORM = "<form " ;
+	final String FORM_END = "</form>" ;
+	final String INPUT = "<input ";
+	final String NAME = " name='" ;
+	final String VALUE = " value='" ;
+	final String CLOSE = "'" ;
+	final String SELECT = "<select " ;
+	int start = -1 ; // Assume no start of form is found.
+	int end   = -1 ; // Assume no  end  of form is found.
+	int current = 0 ;
+	List<NameValuePair> firstFormSomeInputFields = Util.makeArrayList(10) ;
+	
+	WebPage wp = new WebPage() ;
+	
+	Iterator<String> it = wpInput.getLines().iterator() ;
+	while (it.hasNext()) {
+		//
+		// Convert to lower case and convert 
+	    	// double quotes to single quotes.
+		//
+	    String s = it.next().toLowerCase().replace("\"", "'") ;
+	    wp.appendLine(s);
+	    if (start == -1) {
+		if (s.indexOf(FORM) >= 0) {
+		    start = current ;
+		}
+	    } else if (end == -1) {
+		if (s.indexOf(FORM_END) >= 0) {
+		    end = current ;
+		}
+	    }
+	    if ((start >= 0) && (end == -1)) { // Form started & has not ended.
+		if (s.indexOf(INPUT) >= 0) {
+		    int nameStart = s.indexOf(NAME) + NAME.length() ;
+		    int nameEnd   = s.indexOf(CLOSE, nameStart) ;
+		    String name   = s.substring(nameStart, nameEnd) ;
+		    String value  = "" ;  // Use this if 
+		    			  // there is no value given.
+		    int valueStart = s.indexOf(VALUE) ;
+		    if (valueStart >= 0) {
+			int valueEnd = s.indexOf(CLOSE, valueStart) ;
+			value = s.substring(valueStart, valueEnd) ;
+		    }
+		    firstFormSomeInputFields.add(
+			    new NameValuePair(name, value)) ;
+		}
+		if (s.indexOf(SELECT) >= 0) {
+		    int nameStart = s.indexOf(NAME) + NAME.length() ;
+		    int nameEnd   = s.indexOf(CLOSE, nameStart) ;
+		    String name   = s.substring(nameStart, nameEnd) ;
+		    String value  = "DAILY" ;  // Use this for the value.
+		    firstFormSomeInputFields.add(
+			    new NameValuePair(name, value)) ;
+		}
+	    }
+	    current++ ;
+	}
+//	//
+//	// Duplicate the last pair.
+//	//
+//	NameValuePair nvp = firstFormSomeInputFields.get(
+//		firstFormSomeInputFields.size() - 1) ;
+//	firstFormSomeInputFields.add(
+//		new NameValuePair(nvp.getName(), nvp.getValue())) ;
+
+	// System.out.println(Util.getCallerMethodName() +
+	// " found " + firstFormHiddenInputFields) ; // debug
+	return firstFormSomeInputFields;
     }
 
     /**
@@ -383,14 +473,23 @@ public class SmartMeterTexasDataCollector {
      * more than one form, because WebPage.getHiddenFields cannot deal with
      * multiple forms.
      * 
+     * This method also deals with hidden fields where the value is missing.
+     * In such cases, an empty value is used.  Ian Shef IBS 15 Oct 2018.  This 
+     * is the Smart Meter Texas version of getHiddenFieldsInFirstForm(...).  
+     * Some of the constants have changed case (Upper Case versus Lower Case)
+     * and the type of the returned value has changed.  
+     * Ian Shef  IBS  17 Oct 2018
+     * 
      * @param wp
      *            The WebPage from which to extract the hidden fields.
-     * @return Map<String, String> of the name and the value of each hidden
+     * @return ArrayList<String, String> of the name and the value 
+     *         of each hidden
      *         field found.
      */
-    public static Map<String, String> getHiddenFieldsInFirstForm(WebPage wp) {
-	final String FORM = "<form ";
-	final String FORM_END = "</form>";
+    public static ArrayList<NameValuePair> 
+    XgetHiddenFieldsInFirstFormSMT(WebPage wp) {
+	final String FORM = "<FORM ";
+	final String FORM_END = "</FORM>";
 	final String INPUT = "<input ";
 	final String HIDDEN1 = " type='hidden' ";
 	final String HIDDEN2 = " type=\"hidden\" ";
@@ -403,7 +502,7 @@ public class SmartMeterTexasDataCollector {
 	int start = -1; // Assume no start of form is found.
 	int end = 0;
 	int current = 0;
-	Map<String, String> firstFormHiddenInputFields;
+	ArrayList<NameValuePair> firstFormHiddenInputFields;
 
 	// Locate the start.
 	while (current >= 0) {
@@ -447,7 +546,7 @@ public class SmartMeterTexasDataCollector {
 	}
 
 	// Get the hidden input fields.
-	firstFormHiddenInputFields = Util.makeLinkedHashMap();
+	firstFormHiddenInputFields = Util.makeArrayList(10) ;
 	current = start;
 	while ((current >= 0) && (current <= end)) {
 	    WPLocation loc = wp.indexOf(INPUT, current);
@@ -465,16 +564,42 @@ public class SmartMeterTexasDataCollector {
 		String name;
 		String value;
 		name = wp.subString(loc, NAME1, CLOSE1);
-		value = wp.subString(loc, VALUE1, CLOSE1);
-		firstFormHiddenInputFields.put(name, value);
+		//
+		// Start of IBS 15 Oct 2018 part 1 of 2.
+		//
+		if (wp.indexOf(VALUE1, loc.getLine()).getLine()>=0) {
+		    value = wp.subString(loc, VALUE1, CLOSE1);
+		} else {
+		    value = "" ;
+		}
+		//
+		// End of IBS 15 Oct 2018 part 1 of 2.
+		//
+		//
+		//  One line for IBS  18 Oct 2018 part 1 of 2.
+		//
+		firstFormHiddenInputFields.add(new NameValuePair(name, value)) ;
 	    } else if (text.contains(HIDDEN2)) {
 		// Here if we have a hidden input field within the form.
 		// Get the name and the corresponding value.
 		String name;
 		String value;
 		name = wp.subString(loc, NAME2, CLOSE2);
-		value = wp.subString(loc, VALUE2, CLOSE2);
-		firstFormHiddenInputFields.put(name, value);
+		//
+		// Start of IBS 15 Oct 2018 part 2 of 2.
+		//
+		if (wp.indexOf(VALUE2, loc.getLine()).getLine()>=0) {
+		    value = wp.subString(loc, VALUE1, CLOSE1);
+		} else {
+		    value = "" ;
+		}
+		//
+		// End of IBS 15 Oct 2018 part 2 of 2.
+		//
+		//
+		//  One line for IBS  18 Oct 2018 part 2 of 2.
+		//
+		firstFormHiddenInputFields.add(new NameValuePair(name, value)) ;
 	    }
 	    current++;
 	}
@@ -686,6 +811,9 @@ public class SmartMeterTexasDataCollector {
 	private final Object lock = new Object() ;
 	
 	private static final String msgDown = "No results found.";
+	private static final String msgNoResource = 
+		"The Access Manager WebSEAL server cannot find the resource " +
+		"you have requested." ;
 	private static final String fromStringStartRead  = 
 		"<SPAN name=\"ViewDailyUsage_RowSet_Row_column7\">" ;
 	private static final String toStringStartRead = 
@@ -730,10 +858,25 @@ public class SmartMeterTexasDataCollector {
 //	}
 
 	private String extractAddressFromLogin(WebPage wp) {
-	    String startFrom1 = ";reportType_trigger_id";
-	    String startFrom2 = "_f.action = &quot;";
+	    String startFrom1 = "value='Update Report'";
+	    String startFrom2 = "onclick=\"this.form.action = &quot;";
 	    String goTo = "&quot;;";
+//	    String startFrom1 = ";reportType_trigger_id";
+//	    String startFrom2 = "_f.action = &quot;";
+//	    String goTo = "&quot;;";
+	    if (displayWebPageExtractAddressFromGetData) {
+		StringBuilder sb = new StringBuilder() ;
+		for (String s : wp.getLines()) {
+		sb.append(s) ;
+		sb.append(System.lineSeparator()) ;
+		}
+		msg("Web Page is:") ;
+		msg(sb) ;
+	    }
 	    WPLocation wpl = wp.indexOf(startFrom1);
+	    assertGoodLocation(wpl);
+	    wpl = wp.indexOf(startFrom2, wpl.getLine()) ; // Get to the
+	    						  // correct line.
 	    assertGoodLocation(wpl);
 	    String s = wp.subString(wpl, startFrom2, goTo);
 	    int commentStart = s.indexOf('#') ;
@@ -771,7 +914,7 @@ public class SmartMeterTexasDataCollector {
 		throw new AssertionError("Bad location.");
 	}
 
-	private void login() {
+	private WebPage login() {
 	    List<NameValuePair> nameValuePairs = new ArrayList<>();
 
 	    getPage("https://www.smartmetertexas.com:443/CAP/public/"); // 91
@@ -797,10 +940,13 @@ public class SmartMeterTexasDataCollector {
 	     * 302 Found 116 GET - sets some cookies.
 	     */
 	    addressSuffix = extractAddressFromLogin(wp);
+	    return wp ;
 	}
 
-	private void getData() {
+	private void getData(WebPage webPage) {
 	    List<NameValuePair> nameValuePairs = new ArrayList<>();
+	    final String VIEWUSAGE = "viewUsage_" ; 	// The capital "U" is 
+	    						// significant !
 
 	    /*
 	     * from 00 - WebScarab 20180808 myexpressenergy_com Get Data
@@ -835,51 +981,71 @@ public class SmartMeterTexasDataCollector {
 	     * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2=
 	     * 
 	     */
-
+/*
+ * _bowStEvent=Usage%2Fportlet%2FUsageCustomerMetersPortlet%21fireEvent%3AForm%3AViewUsagePage_SaveDataSubmitEvent&tag_UserLocale=en&reportType=INTERVAL&viewUsage_startDate=10%2F12%2F2018&viewUsage_endDate=10%2F12%2F2018&viewusage_but_updaterpt=Update+Report&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515NRCAdmin_00515Default_00515Default_00515Default_00515Esiid_0051516674c265d7_00515bf4cc=&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515NRCAdmin_00515Default_00515Default_00515Default_00515Esiid_0051516674c265d7_00515bf4cc1=&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515NRCAdmin_00515Default_00515Default_00515Default_00515Esiid_0051516674c265d7_00515bf4cc2=&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515NRCAdmin_00515Default_00515Default_00515Default_00515Esiid_0051516674c265d7_00515bf4cc2=
+ */
 	    //
 	    // Preparing to do POST 164
 	    //
-	    nameValuePairs.add(new NameValuePair("_bowStEvent",
-		    "Usage%2Fportlet%2FUsageCustomerMetersPortlet%21fireEvent"
-			    + "%3AForm%3AViewUsagePage_SaveDataSubmitEvent"));
-	    nameValuePairs.add(new NameValuePair("tag_UserLocale", "en"));
-	    nameValuePairs.add(new NameValuePair("reportType", "DAILY"));
+//	    nameValuePairs.add(new NameValuePair("reportType", "DAILY"));
 	    DateTimeFormatter dtf = 
 		    DateTimeFormatter.ofPattern("MM'%2F'dd'%2F'yyyy") ;
 	    String dateString = date.format(dtf) ;
 //	    nameValuePairs.add(
-//		    new NameValuePair("viewUsage_startDate", "08%2F01%2F2018")); // <<<<<<<<<<<< Class DateTimeFormatter "MM'%2F'dd'%2F'yyyy"
+//		    new NameValuePair("viewUsage_startDate", dateString)) ; // <<<<<<<<<<<< Class DateTimeFormatter "MM'%2F'dd'%2F'yyyy"
 //	    nameValuePairs.add(
-//		    new NameValuePair("viewUsage_endDate", "08%2F03%2F2018")) ;  // <<<<<<<<<<<< Class DateTimeFormatter "MM'%2F'dd'%2F'yyyy"
-	    nameValuePairs.add(
-		    new NameValuePair("viewUsage_startDate", dateString)) ; // <<<<<<<<<<<< Class DateTimeFormatter "MM'%2F'dd'%2F'yyyy"
-	    nameValuePairs.add(
-		    new NameValuePair("viewUsage_endDate"  , dateString)) ; // <<<<<<<<<<<< Class DateTimeFormatter "MM'%2F'dd'%2F'yyyy"
-	    nameValuePairs
-		    .add(new NameValuePair("_bst_locator_Usage_00215portlet"
-			    + "_00215UsageCustomerMetersPortlet"
-			    + "_00515ResidentialC"
-			    + "_00515Default_00515Default" + "_00515Default"
-			    + "_00515Esiid_005151651b3535a4_00515b6e7e", ""));
-	    nameValuePairs.add(new NameValuePair(
-		    "_bst_locator_Usage_00215portlet"
-			    + "_00215UsageCustomerMetersPortlet"
-			    + "_00515ResidentialC"
-			    + "_00515Default_00515Default_00515Default"
-			    + "_00515Esiid" + "_005151651b3535a4_00515b6e7e1",
-		    ""));
-	    nameValuePairs.add(new NameValuePair(
-		    "_bst_locator_Usage_00215portlet"
-			    + "_00215UsageCustomerMetersPortlet"
-			    + "_00515ResidentialC"
-			    + "_00515Default_00515Default_00515Default"
-			    + "_00515Esiid" + "_005151651b3535a4_00515b6e7e2",
-		    ""));
+//		    new NameValuePair("viewUsage_endDate"  , dateString)) ; // <<<<<<<<<<<< Class DateTimeFormatter "MM'%2F'dd'%2F'yyyy"
+	    //
+	    // Get the hidden input fields in the web page as a Map
+	    // (the names seem to be somewhat randomized each time) and
+	    // add all of the Map elements into the nameValuePairs List. 
+	    //
+	    ArrayList<NameValuePair> al = Util.makeArrayList(
+		    getSomeFieldsInFirstFormSMT(webPage)) ;
+	    ListIterator<NameValuePair> lit = al.listIterator() ;
+	    while (lit.hasNext()) {
+		NameValuePair nvp = lit.next() ;
+		String name = nvp.getName() ;
+		if (name.startsWith(VIEWUSAGE)) {
+		    nvp.setValue(dateString);
+		    lit.set(nvp) ;
+		}
+	    }
+//	    nameValuePairs.addAll(al) ;
+//	    for (String name : m.keySet()) {
+//		nameValuePairs.add(new NameValuePair(name, m.get(name))) ;
+//	    }
+	    String pageURL = "https://www.smartmetertexas.com" + addressSuffix ;
+	    msg("===========================") ;
+	    msg("Attempting to get data from") ;
+	    msg(pageURL) ;
+	    msg("using the following parameters") ;
+	    Iterator<NameValuePair> it = nameValuePairs.iterator() ;
+	    while (it.hasNext()) {
+		msg(it.next());
+	    }
+	    msg("===========================") ;
 	    WebPage wp = getPage(
-		    "https://www.smartmetertexas.com:443" + addressSuffix,
-		    nameValuePairs, null);
+		    pageURL,nameValuePairs, null);
 	    //
 	    // Check that there really is data.
+	    //
+	    
+	    //
+	    // First, check that the data was properly accessed.
+	    //
+	    WPLocation resourceMissing = wp.indexOf(msgNoResource) ;
+	    if (!badLocation(resourceMissing)) {
+		fb.log("Resource is missing, "
+			+ "fix the program and please try again later.",
+			Feedbacker.TO_FILE + Feedbacker.TO_GUI + 
+			Feedbacker.TO_OUT
+			+ Feedbacker.FLUSH) ;
+		System.exit(-26) ;
+	    }
+	    
+	    //
+	    // Second, check that the server is up.
 	    //
 	    WPLocation serverDown = wp.indexOf(msgDown);
 	    if (!badLocation(serverDown)) {
@@ -905,7 +1071,7 @@ public class SmartMeterTexasDataCollector {
 		 * 
 		 * <SPAN name="ViewDailyUsage_RowSet_Row_column7">
 		 * 
-		 * preceeds the data, and
+		 * precedes the data, and
 		 * 
 		 * </SPAN></TD>
 		 * 
@@ -917,6 +1083,7 @@ public class SmartMeterTexasDataCollector {
 		 * 
 		 */
 		WPLocation wpData = wp.indexOf(fromStringStartRead) ;
+		assertGoodLocation(wpData) ;
 		String dataString = wp.subString(wpData, 
 			fromStringStartRead, 
 			toStringStartRead) ;
@@ -960,9 +1127,9 @@ public class SmartMeterTexasDataCollector {
 	@Override
 	public void run() {
 	    msg("GetData run about to login() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
-	    login();
+	    WebPage wp = login();
 	    msg("GetData run about to getData() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
-	    getData();
+	    getData(wp);
 	    msg("GetData run about to logout() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
 	    logout();
 	}
