@@ -298,10 +298,10 @@ public class WebPage {
     }
 
     /**
-     * Returns all of the source text of the web page as a <tt>Vector</tt>, with
-     * each element of the <tt>Vector</tt> containing a line of the web page.
+     * Returns all of the source text of the web page as a <tt>List</tt>, with
+     * each element of the <tt>List</tt> containing a line of the web page.
      * <p>
-     * The elements of the <tt>Vector</tt> will be in the same order as the
+     * The elements of the <tt>List</tt> will be in the same order as the
      * lines of the web page. The elements are of type <tt>String</tt>.
      * 
      * @return A <tt>List</tt> (currently implemented as an ArrayList but not
