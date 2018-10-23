@@ -404,6 +404,8 @@ public class SmartMeterTexasDataCollector {
 	final String VALUE = " value='" ;
 	final String CLOSE = "'" ;
 	final String SELECT = "<select " ;
+	final String HIDDEN = "hidden" ;
+	final String VIEWUSAGE = "name='viewusage_" ;
 	int start = -1 ; // Assume no start of form is found.
 	int end   = -1 ; // Assume no  end  of form is found.
 	int current = 0 ;
@@ -417,7 +419,8 @@ public class SmartMeterTexasDataCollector {
 		// Convert to lower case and convert 
 	    	// double quotes to single quotes.
 		//
-	    String s = it.next().toLowerCase().replace("\"", "'") ;
+	    String stringOrig = it.next() ;
+	    String s = stringOrig.toLowerCase().replace("\"", "'") ;
 	    wp.appendLine(s);
 	    if (start == -1) {
 		if (s.indexOf(FORM) >= 0) {
@@ -429,24 +432,30 @@ public class SmartMeterTexasDataCollector {
 		}
 	    }
 	    if ((start >= 0) && (end == -1)) { // Form started & has not ended.
-		if (s.indexOf(INPUT) >= 0) {
-		    int nameStart = s.indexOf(NAME) + NAME.length() ;
+		int inputStart = s.indexOf(INPUT) ;
+		int hiddenStart = s.indexOf(HIDDEN, inputStart) ;
+		int viewusageStart = s.indexOf(VIEWUSAGE, inputStart) ;
+		if ((inputStart >= 0) &&
+			((hiddenStart >= 0) || (viewusageStart >= 0))) {
+		    int nameStart = s.indexOf(NAME, inputStart) + NAME.length();
 		    int nameEnd   = s.indexOf(CLOSE, nameStart) ;
-		    String name   = s.substring(nameStart, nameEnd) ;
+		    String name   = stringOrig.substring(nameStart, nameEnd) ;
 		    String value  = "" ;  // Use this if 
 		    			  // there is no value given.
 		    int valueStart = s.indexOf(VALUE) ;
 		    if (valueStart >= 0) {
+			valueStart += VALUE.length() ;
 			int valueEnd = s.indexOf(CLOSE, valueStart) ;
-			value = s.substring(valueStart, valueEnd) ;
+			value = stringOrig.substring(valueStart, valueEnd) ;
 		    }
 		    firstFormSomeInputFields.add(
 			    new NameValuePair(name, value)) ;
 		}
-		if (s.indexOf(SELECT) >= 0) {
-		    int nameStart = s.indexOf(NAME) + NAME.length() ;
+		int selStart = s.indexOf(SELECT) ;
+		if (selStart >= 0) {
+		    int nameStart = s.indexOf(NAME, selStart) + NAME.length() ;
 		    int nameEnd   = s.indexOf(CLOSE, nameStart) ;
-		    String name   = s.substring(nameStart, nameEnd) ;
+		    String name   = stringOrig.substring(nameStart, nameEnd) ;
 		    String value  = "DAILY" ;  // Use this for the value.
 		    firstFormSomeInputFields.add(
 			    new NameValuePair(name, value)) ;
@@ -1011,7 +1020,7 @@ public class SmartMeterTexasDataCollector {
 		    lit.set(nvp) ;
 		}
 	    }
-//	    nameValuePairs.addAll(al) ;
+	    nameValuePairs.addAll(al) ;
 //	    for (String name : m.keySet()) {
 //		nameValuePairs.add(new NameValuePair(name, m.get(name))) ;
 //	    }
