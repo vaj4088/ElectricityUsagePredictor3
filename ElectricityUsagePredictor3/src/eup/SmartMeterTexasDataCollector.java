@@ -16,9 +16,14 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
@@ -47,8 +52,11 @@ public class SmartMeterTexasDataCollector {
     // of a redirect.
     private static final int tryRedirectMax = 10;
 
-    private HttpClient client; // Handles the work, holds context
+    HttpClient client; // Handles the work, holds context
     // (i.e. cookies).
+    PostMethod method ;  //  The method (e.g. POST, GET) used for web access.
+    ExecutorService executor = Executors.newSingleThreadExecutor() ;
+    
     String addressSuffix = "" ;
     
     // The following can be enabled to provide some debugging
@@ -58,7 +66,10 @@ public class SmartMeterTexasDataCollector {
     private boolean displayHeadersAndFooters = false;
     private boolean displayCookies = false;
     private boolean displayPostParameters = false;
-    boolean displayWebPageExtractAddressFromGetData = true ;
+    boolean displayWebPageExtractAddressFromGetData = false ;
+    boolean displayGetDataPage = true ;
+    boolean displayGetDataParameters = true ;
+    
 
     static final AtomicInteger ai = new AtomicInteger() ;
 	
@@ -85,12 +96,12 @@ public class SmartMeterTexasDataCollector {
     public WebPage getPage(String url) {
 	WebPage wp ;
 	// Create a method instance.
-	GetMethod method = new GetMethod(url);
+	GetMethod gm = new GetMethod(url);
 	//
 	// 3 Nov 2012 - Be lenient about cookies.
 	//
-	method.getParams().setCookiePolicy(CookiePolicy.BROWSER_COMPATIBILITY);
-	wp = requestResponse(method);
+	gm.getParams().setCookiePolicy(CookiePolicy.BROWSER_COMPATIBILITY);
+	wp = requestResponse(gm);
 	return wp;
     }
 
@@ -155,7 +166,8 @@ public class SmartMeterTexasDataCollector {
 	    NameValuePair[] removeData) {
 	WebPage wp = null;
 	// Create a method instance.
-	PostMethod method = new PostMethod(url);
+//	PostMethod method = new PostMethod(url);
+	method = new PostMethod(url);
 	// Add parameters from the form's hidden input fields.
 //	Iterator<Map.Entry<String, String>> it = hiddenInputFields.entrySet()
 //		.iterator();
@@ -214,7 +226,7 @@ public class SmartMeterTexasDataCollector {
      * page are collected for use by getPage if the next request is a
      * <tt>POST</tt>.
      * 
-     * @param method
+     * @param hmb
      *            A class inheriting from <tt>HttpMethodBase</tt> such as
      *            <tt>GetMethod</tt> or <tt>PostMethod</tt> that implements the
      *            necessary http method. Debug information will be sent to
@@ -226,12 +238,12 @@ public class SmartMeterTexasDataCollector {
      * @return A <tt>WebPage</tt> containing the lines of source text of the web
      *         page.
      */
-    private WebPage requestResponse(HttpMethodBase method) {
+    private WebPage requestResponse(HttpMethodBase hmb) {
 	int statusCode; // Result of HTTP request.
 	WebPage wp = null; // Text of response will be saved in wp.
 
 	// Provide custom retry handler if necessary
-	method.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,
+	hmb.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,
 		new DefaultHttpMethodRetryHandler(3, false));
 
 	try {
@@ -239,13 +251,13 @@ public class SmartMeterTexasDataCollector {
 	    statusCode = -1;
 	    for (int tryNum = 1; tryNum <= tryRedirectMax; tryNum++) {
 		// Execute the method.
-		statusCode = client.executeMethod(method);
+		statusCode = client.executeMethod(hmb);
 		if ((HttpStatus.SC_MOVED_PERMANENTLY == statusCode)
 			|| (HttpStatus.SC_MOVED_TEMPORARILY == statusCode)
 			|| (HttpStatus.SC_SEE_OTHER == statusCode)
 			|| (HttpStatus.SC_TEMPORARY_REDIRECT == statusCode)) {
 		    String redirectLocation;
-		    Header locationHeader = method
+		    Header locationHeader = hmb
 			    .getResponseHeader("location");
 		    if (locationHeader != null) {
 			redirectLocation = locationHeader.getValue();
@@ -255,9 +267,9 @@ public class SmartMeterTexasDataCollector {
 			msgEDT(toString() + 
 				"#requestResponse failed attempt to "
 				+ "executeMethod on "
-				+ method.getClass().getName()
+				+ hmb.getClass().getName()
 				+ ", status code " + statusCode + ": "
-				+ method.getStatusLine()
+				+ hmb.getStatusLine()
 				+ ", but missing new location.");
 			break; // No point in continuing to loop.
 		    } // end of if (locationHeader != null)
@@ -265,10 +277,10 @@ public class SmartMeterTexasDataCollector {
 		    // Here if redirecting.
 		    // Second parameter true indicates that the URI
 		    // is already escaped.
-		    method.setURI(new URI(redirectLocation, true));
+		    hmb.setURI(new URI(redirectLocation, true));
 		    msgEDT(toString() + "#requestResponse redirecting for "
-			    + method.getClass().getName() + ", status code "
-			    + statusCode + ": " + method.getStatusLine()
+			    + hmb.getClass().getName() + ", status code "
+			    + statusCode + ": " + hmb.getStatusLine()
 			    + " to " + redirectLocation);
 		    continue; // Loop back and retry.
 
@@ -283,13 +295,13 @@ public class SmartMeterTexasDataCollector {
 	    if (statusCode != HttpStatus.SC_OK) {
 		msgEDT(toString()
 			+ "#requestResponse failed attempt to executeMethod on "
-			+ method.getClass().getName() + ", status code "
-			+ statusCode + ": " + method.getStatusLine());
+			+ hmb.getClass().getName() + ", status code "
+			+ statusCode + ": " + hmb.getStatusLine());
 	    }
 
 	    // Read the response body.
 	    BufferedReader br = new BufferedReader(new InputStreamReader(
-		    method.getResponseBodyAsStream()));
+		    hmb.getResponseBodyAsStream()));
 	    String rline;
 
 	    // Deal with the response.
@@ -336,22 +348,22 @@ public class SmartMeterTexasDataCollector {
 		msgEDT("==========    OTHER INFORMATION    ==========");
 	    }
 	    if (displayQueryOptions) {
-		msgEDT("Follow redirects = " + method.getFollowRedirects());
-		msgEDT("Do authentication = " + method.getDoAuthentication());
-		msgEDT("Path used = " + method.getPath());
-		msgEDT("Query = " + method.getQueryString());
-		StatusLine sl = method.getStatusLine();
+		msgEDT("Follow redirects = " + hmb.getFollowRedirects());
+		msgEDT("Do authentication = " + hmb.getDoAuthentication());
+		msgEDT("Path used = " + hmb.getPath());
+		msgEDT("Query = " + hmb.getQueryString());
+		StatusLine sl = hmb.getStatusLine();
 		if (null != sl) {
 		    msgEDT("Status = " + sl.toString());
 
 		}
 	    }
 	    if (displayHeadersAndFooters) {
-		Header[] h = method.getResponseHeaders();
+		Header[] h = hmb.getResponseHeaders();
 		for (int i = 0; i < h.length; i++) {
 		    msgEDT("Header " + i + ":  " + h[i].toString());
 		}
-		Header[] f = method.getResponseFooters();
+		Header[] f = hmb.getResponseFooters();
 		for (int i = 0; i < f.length; i++) {
 		    msgEDT("Footer " + i + ":  " + f[i].toString());
 		}
@@ -368,7 +380,7 @@ public class SmartMeterTexasDataCollector {
 	    }
 
 	    // Release the connection.
-	    method.releaseConnection();
+	    hmb.releaseConnection();
 	}
 //		} else {
 //		    throw new UnacceptableFormsException(e.getMessage(),
@@ -447,6 +459,12 @@ public class SmartMeterTexasDataCollector {
 			valueStart += VALUE.length() ;
 			int valueEnd = s.indexOf(CLOSE, valueStart) ;
 			value = stringOrig.substring(valueStart, valueEnd) ;
+			try {
+			    value = java.net.URLEncoder.encode(value, "UTF-8") ;
+			} catch (UnsupportedEncodingException e) {
+			    e.printStackTrace();
+			    System.exit(-27);
+			}
 		    }
 		    firstFormSomeInputFields.add(
 			    new NameValuePair(name, value)) ;
@@ -795,7 +813,7 @@ public class SmartMeterTexasDataCollector {
      * (for some version of the files).
      */
 
-    class GetData extends Thread {
+    class GetData {
 	/*
 	 * 
 	 * To use this class, do:
@@ -923,7 +941,7 @@ public class SmartMeterTexasDataCollector {
 		throw new AssertionError("Bad location.");
 	}
 
-	private WebPage login() {
+	WebPage login() {
 	    List<NameValuePair> nameValuePairs = new ArrayList<>();
 
 	    getPage("https://www.smartmetertexas.com:443/CAP/public/"); // 91
@@ -952,7 +970,7 @@ public class SmartMeterTexasDataCollector {
 	    return wp ;
 	}
 
-	private void getData(WebPage webPage) {
+	void getData(WebPage webPage) {
 	    List<NameValuePair> nameValuePairs = new ArrayList<>();
 	    final String VIEWUSAGE = "viewUsage_" ; 	// The capital "U" is 
 	    						// significant !
@@ -1025,7 +1043,7 @@ public class SmartMeterTexasDataCollector {
 //		nameValuePairs.add(new NameValuePair(name, m.get(name))) ;
 //	    }
 	    String pageURL = "https://www.smartmetertexas.com" + addressSuffix ;
-	    msg("===========================") ;
+	    msg("<br>===========================") ;
 	    msg("Attempting to get data from") ;
 	    msg(pageURL) ;
 	    msg("using the following parameters") ;
@@ -1033,7 +1051,43 @@ public class SmartMeterTexasDataCollector {
 	    while (it.hasNext()) {
 		msg(it.next());
 	    }
-	    msg("===========================") ;
+	    msg("<br>===========================") ;
+	    msg("<br>===========================") ;
+	    msg("Adding the cookie:") ;
+	    //
+	    // Get the client's current state.
+	    //
+	    HttpState state = client.getState() ;
+	    //
+	    // Get the client's first cookie (cookie 0).
+	    //
+	    Cookie cookie = state.getCookies()[0] ;
+	    //
+	    // Get the parameters of the cookie so that 
+	    // we know what parameters to use.
+	    //
+	    String domain = cookie.getDomain() ;
+	    String path   = cookie.getPath() ;
+	    Date expires  = cookie.getExpiryDate() ;
+	    boolean secure= cookie.getSecure() ;
+	    //
+	    // Create the new cookie and add it to the collection of cookies.
+	    //
+	    Cookie newCookie = new Cookie(
+		    domain, 
+		    "IV_JCT", 
+		    "%2Ftexas",
+		    path,
+		    expires,
+		    secure
+		    ) ;
+	    state.addCookie(newCookie) ; 
+	    //
+	    //  Update the client's state.
+	    //
+	    client.setState(state) ;
+	    msg(newCookie) ;
+	    msg("<br>===========================") ;
 	    WebPage wp = getPage(
 		    pageURL,nameValuePairs, null);
 	    //
@@ -1092,6 +1146,35 @@ public class SmartMeterTexasDataCollector {
 		 * 
 		 */
 		WPLocation wpData = wp.indexOf(fromStringStartRead) ;
+		if (displayGetDataPage) {
+		    if (badLocation(wpData)) {
+			StringBuilder sb = new StringBuilder() ;
+			for (String line : wp.getLines()) {
+			    sb.append(line) ;
+			}
+			System.out.println("=====     Show page.     =====") ;
+			System.out.println(sb) ;
+			System.out.println("=====     Showed page.     =====") ;
+		    }
+		}
+		if (displayGetDataParameters) {
+			System.out.println("=====     Show parameters.     =====") ;
+			System.out.println("URL:") ;
+			System.out.println(pageURL) ;
+			System.out.println("NameValuePairs:") ;
+			for (NameValuePair nvp : nameValuePairs) {
+			    System.out.println(nvp) ;
+			}
+			System.out.println("Cookies:") ;
+			for (Cookie forCookie : state.getCookies()) {
+			    System.out.println(forCookie) ;
+			}
+			System.out.println("Request Headers:") ;
+			for (Header h : method.getRequestHeaders()) {
+			    System.out.println(h) ;
+			}
+			System.out.println("=====     Showed parameters.     =====") ;
+		}
 		assertGoodLocation(wpData) ;
 		String dataString = wp.subString(wpData, 
 			fromStringStartRead, 
@@ -1114,8 +1197,8 @@ public class SmartMeterTexasDataCollector {
 	     */
 	    addressSuffix = extractAddressFromGetData(wp);
 	}
-
-	private void logout() {
+	
+	void logout() {
 	    //
 	    // Conversation 173 GET - sets some cookies.
 	    //
@@ -1133,14 +1216,44 @@ public class SmartMeterTexasDataCollector {
 	    // 301 Moved Permanently, which automatically causes 176.
 	}
 
-	@Override
-	public void run() {
-	    msg("GetData run about to login() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
-	    WebPage wp = login();
-	    msg("GetData run about to getData() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
-	    getData(wp);
-	    msg("GetData run about to logout() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
-	    logout();
+	public void invoke() {
+//	    msg("GetData run about to login() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
+	    Future<WebPage> fLogin = executor.submit(new Callable<WebPage>() {
+		@SuppressWarnings("unused")
+		@Override
+		public WebPage call() throws Exception {
+		    msg("GetData run about to login() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
+		    return login() ;
+		}
+	    } ) ;
+//	    WebPage wp = login();
+//	    msg("GetData run about to getData() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
+	    Future<Integer> fGetData = executor.submit(new Callable<Integer>() {
+		@Override
+		public Integer call() throws Exception {
+		    msg("GetData run about to getData() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
+		    WebPage wp = fLogin.get();
+		    getData(wp) ;
+		    return Integer.valueOf(1) ;
+		}
+	    } ) ;
+//	    getData(wp);
+//	    msg("GetData run about to logout() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
+	    Future<Integer> fLogout = executor.submit(new Callable<Integer>() {
+		@SuppressWarnings("unused")
+		@Override
+		public Integer call() throws Exception {
+		    //
+		    // The following line removes an IDE warning.
+		    //
+		    Integer throwaway = fGetData.get() ;
+		    msg("GetData run about to logout() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
+		    logout() ;
+		    return Integer.valueOf(1) ;
+		}
+	    } ) ;
+//	    logout();
+	    fLogout.isDone() ;  //  Removes an IDE warning.
 	}
 
 	/**
@@ -1162,10 +1275,7 @@ public class SmartMeterTexasDataCollector {
 	    }
 	    if (!dv) {
 		msg("getStartRead about to start().") ;
-		/*
-		 * start() ;  //  Causes the run method to execute on a new Thread.
-		 */
-		run() ;
+		invoke() ;
 		msg("getStartRead after start().") ;
 		value = startRead ;
 	    }
@@ -1194,7 +1304,7 @@ public class SmartMeterTexasDataCollector {
 		dv = dataValid ;
 	    }
 	    if (!dv) {
-		start() ;  //  Causes the run method to execute on a new Thread.
+		invoke() ;  
 		value = endRead ;
 	    }
 	    return value;

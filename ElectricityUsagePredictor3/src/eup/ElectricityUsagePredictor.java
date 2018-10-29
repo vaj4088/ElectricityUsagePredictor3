@@ -336,8 +336,9 @@ implements ActionListener {
 		toLocalDate() ;
  	int currentMeterReading     = 
  		(smtdc.new GetData(cBDLD)).getStartRead() ;
- 	int currentBillMeterReading = 
- 		(smtdc.new GetData(cDLD )).getStartRead() ;
+// 	int currentBillMeterReading = 
+// 		(smtdc.new GetData(cDLD )).getStartRead() ;
+ 	int currentBillMeterReading = 0 ; // TEMPORARY: DELETE, + UNCOMMENT ABOVE.
 	Predictor predictor = new Predictor.Builder().
  		currentBillDate(cBDLD).
  		currentBillMeterReading(currentBillMeterReading).
