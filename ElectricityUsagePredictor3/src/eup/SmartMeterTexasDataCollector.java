@@ -317,26 +317,7 @@ public class SmartMeterTexasDataCollector {
 	} catch (HttpException e) {
 	    System.err.println("Fatal protocol violation: " + e.getMessage());
 	    e.printStackTrace();
-	    //
-	    // Should attempt to catch:
-	    //
-	    // Fatal transport error: Connection timed out
-	    // java.net.ConnectException: Connection timed out
-	    //
 	} catch (IOException e) {
-	    // This happens fairly frequently with e.getMessage()
-	    // returning "Connection reset" and the stack trace begins
-	    // with
-	    // "java.net.SocketException: Connection reset"
-	    //
-	    // May need to figure out how to recover automatically.
-	    //
-	    // Also can get e.getMessage()
-	    // returning "Connection timed out" and the stack trace begins
-	    // with
-	    // "java.net.ConnectException: Connection timed out"
-	    //
-	    //
 	    System.err.println("Fatal transport error: " + e.getMessage());
 	    e.printStackTrace();
 	} finally {
@@ -382,12 +363,6 @@ public class SmartMeterTexasDataCollector {
 	    // Release the connection.
 	    hmb.releaseConnection();
 	}
-//		} else {
-//		    throw new UnacceptableFormsException(e.getMessage(),
-//			    e.getCause());
-//		}
-//	    }
-//	}
 	return wp ;
     }
 
@@ -481,158 +456,7 @@ public class SmartMeterTexasDataCollector {
 	    }
 	    current++ ;
 	}
-//	//
-//	// Duplicate the last pair.
-//	//
-//	NameValuePair nvp = firstFormSomeInputFields.get(
-//		firstFormSomeInputFields.size() - 1) ;
-//	firstFormSomeInputFields.add(
-//		new NameValuePair(nvp.getName(), nvp.getValue())) ;
-
-	// System.out.println(Util.getCallerMethodName() +
-	// " found " + firstFormHiddenInputFields) ; // debug
 	return firstFormSomeInputFields;
-    }
-
-    /**
-     * A method that extracts the first form in a web page, and then extracts
-     * the hidden fields within. This can be helpful when a web page contains
-     * more than one form, because WebPage.getHiddenFields cannot deal with
-     * multiple forms.
-     * 
-     * This method also deals with hidden fields where the value is missing.
-     * In such cases, an empty value is used.  Ian Shef IBS 15 Oct 2018.  This 
-     * is the Smart Meter Texas version of getHiddenFieldsInFirstForm(...).  
-     * Some of the constants have changed case (Upper Case versus Lower Case)
-     * and the type of the returned value has changed.  
-     * Ian Shef  IBS  17 Oct 2018
-     * 
-     * @param wp
-     *            The WebPage from which to extract the hidden fields.
-     * @return ArrayList<String, String> of the name and the value 
-     *         of each hidden
-     *         field found.
-     */
-    public static ArrayList<NameValuePair> 
-    XgetHiddenFieldsInFirstFormSMT(WebPage wp) {
-	final String FORM = "<FORM ";
-	final String FORM_END = "</FORM>";
-	final String INPUT = "<input ";
-	final String HIDDEN1 = " type='hidden' ";
-	final String HIDDEN2 = " type=\"hidden\" ";
-	final String NAME1 = " name='";
-	final String NAME2 = " name=\"";
-	final String VALUE1 = " value='";
-	final String VALUE2 = " value=\"";
-	final String CLOSE1 = "'";
-	final String CLOSE2 = "\"";
-	int start = -1; // Assume no start of form is found.
-	int end = 0;
-	int current = 0;
-	ArrayList<NameValuePair> firstFormHiddenInputFields;
-
-	// Locate the start.
-	while (current >= 0) {
-	    WPLocation loc = wp.indexOf(FORM, current);
-	    current = loc.getLine();
-	    if (current < 0)
-		break; // None found.
-	    int startChar = loc.getColumn();
-	    int docWriteLoc = wp.line(current).indexOf("document.write(\"");
-	    int docWrite2Loc = wp.line(current).indexOf("iframeDoc.write(\"");
-	    if ((current >= 0)
-		    && ((docWriteLoc < 0) || (docWriteLoc > startChar))
-		    && ((docWrite2Loc < 0) || (docWrite2Loc > startChar))) {
-		start = current; // Found acceptable start of form.
-		// Record its line number, and
-		// set up to
-		// continue processing.
-		current = -1; // Indicate no further searching for start
-		// of form.
-	    } else {
-		current++; // Not acceptable start of form, so
-		// set up to continue the search.
-	    }
-	}
-
-	// Locate the end.
-	current = start;
-	while (current >= 0) {
-	    current = wp.indexOf(FORM_END, current).getLine();
-	    if (current >= 0) {
-		if ((wp.line(current).indexOf("document.write(\"") < 0)
-			&& (wp.line(current).indexOf(
-				"iframeDoc.write(\"") < 0)) {
-		    end = current;
-		    current = -1; // Indicate no further searching for
-		    // end of form.
-		} else {
-		    current++;
-		}
-	    }
-	}
-
-	// Get the hidden input fields.
-	firstFormHiddenInputFields = Util.makeArrayList(10) ;
-	current = start;
-	while ((current >= 0) && (current <= end)) {
-	    WPLocation loc = wp.indexOf(INPUT, current);
-	    current = loc.getLine();
-	    // If the input field was found beyond end or not found, then quit.
-	    if ((current > end) || (current < 0))
-		break;
-
-	    String text = wp.substring(loc);
-	    // If the input field is not a hidden field, continue to the next
-	    // one.
-	    if (text.contains(HIDDEN1)) {
-		// Here if we have a hidden input field within the form.
-		// Get the name and the corresponding value.
-		String name;
-		String value;
-		name = wp.subString(loc, NAME1, CLOSE1);
-		//
-		// Start of IBS 15 Oct 2018 part 1 of 2.
-		//
-		if (wp.indexOf(VALUE1, loc.getLine()).getLine()>=0) {
-		    value = wp.subString(loc, VALUE1, CLOSE1);
-		} else {
-		    value = "" ;
-		}
-		//
-		// End of IBS 15 Oct 2018 part 1 of 2.
-		//
-		//
-		//  One line for IBS  18 Oct 2018 part 1 of 2.
-		//
-		firstFormHiddenInputFields.add(new NameValuePair(name, value)) ;
-	    } else if (text.contains(HIDDEN2)) {
-		// Here if we have a hidden input field within the form.
-		// Get the name and the corresponding value.
-		String name;
-		String value;
-		name = wp.subString(loc, NAME2, CLOSE2);
-		//
-		// Start of IBS 15 Oct 2018 part 2 of 2.
-		//
-		if (wp.indexOf(VALUE2, loc.getLine()).getLine()>=0) {
-		    value = wp.subString(loc, VALUE1, CLOSE1);
-		} else {
-		    value = "" ;
-		}
-		//
-		// End of IBS 15 Oct 2018 part 2 of 2.
-		//
-		//
-		//  One line for IBS  18 Oct 2018 part 2 of 2.
-		//
-		firstFormHiddenInputFields.add(new NameValuePair(name, value)) ;
-	    }
-	    current++;
-	}
-	// System.out.println(Util.getCallerMethodName() +
-	// " found " + firstFormHiddenInputFields) ; // debug
-	return firstFormHiddenInputFields;
     }
 
     public void setDisplayCookies(boolean displayCookies) {
@@ -733,11 +557,6 @@ public class SmartMeterTexasDataCollector {
      *            Required but currently unused.
      */
     public static void main(String[] args) {
-
-//	getFeedbacker().log(
-//		"PROGRAM DONE.",
-//		Feedbacker.FLUSH + Feedbacker.TO_FILE + Feedbacker.TO_GUI
-//		+ Feedbacker.TO_OUT);
 	System.exit(0);
     }
 
@@ -786,7 +605,8 @@ public class SmartMeterTexasDataCollector {
     
     /**
      * A convenience method for displaying a line of text on System.out
-     * using the Event Dispatch Thread.
+     * using the Event Dispatch Thread and assuming that this is done
+     * from the Event Dispatch Thread.
      * 
      * @param ob
      *            An <tt>Object</tt> or a <tt>String</tt> to be displayed on
@@ -794,14 +614,6 @@ public class SmartMeterTexasDataCollector {
      *            be called.
      */
     void msgEDT(Object ob) {
-//	javax.swing.SwingUtilities.invokeLater(new Runnable() {
-//	    @Override
-//	    public void run() {
-//		msg(ob) ;
-//	    }
-//	    
-//	});
-//    }
 	msg(ob) ; 
     }
     
@@ -814,19 +626,6 @@ public class SmartMeterTexasDataCollector {
      */
 
     class GetData {
-	/*
-	 * 
-	 * To use this class, do:
-	 * 
-	 * (new GetData()).start() ;
-	 * 
-	 * may need to do: (SmartMeterTexasDataCollector.new GetData()).start()
-	 * ;
-	 * 
-	 * except that the GetData constructor needs a parameter.
-	 * 
-	 */
-
 	/*
 	 * Some fields are volatile due to access from multiple threads.
 	 */
@@ -849,7 +648,6 @@ public class SmartMeterTexasDataCollector {
 		"<SPAN name=\"ViewDailyUsage_RowSet_Row_column8\">" ;
 	private static final String toStringEndRead = 
 		"</SPAN></TD>" ;
-	
 	/*
 	 * To find Start of Day Meter Reading, use
 	 * 
@@ -867,30 +665,10 @@ public class SmartMeterTexasDataCollector {
 //		msg("GetData construction end.") ;
 	}
 
-//	private String extractAddressFromLogin(WebPage wp) {
-//	    String startFrom1 = "_f.action = &quot;/";
-//	    String startFrom2 = "/";
-//	    String goTo = "#";
-//	    WPLocation wpl = wp.indexOf(startFrom1);
-//	    assertGoodLocation(wpl);
-//	    wpl = wp.indexOf(startFrom2, wpl.getLine(), wpl.getColumn());
-//	    assertGoodLocation(wpl);
-//	    wpl = wp.indexOf(startFrom2, wpl.getLine(), wpl.getColumn());
-//	    assertGoodLocation(wpl);
-//	    WPLocation wpl2 = wp.indexOf(goTo, wpl.getLine(), wpl.getColumn());
-//	    assertGoodLocation(wpl2);
-//	    String s = wp.subString(wpl, startFrom2, goTo);
-//	    msg("New suffix from login: " + s + " .");
-//	    return s;
-//	}
-
 	private String extractAddressFromLogin(WebPage wp) {
 	    String startFrom1 = "value='Update Report'";
 	    String startFrom2 = "onclick=\"this.form.action = &quot;";
 	    String goTo = "&quot;;";
-//	    String startFrom1 = ";reportType_trigger_id";
-//	    String startFrom2 = "_f.action = &quot;";
-//	    String goTo = "&quot;;";
 	    if (displayWebPageExtractAddressFromGetData) {
 		StringBuilder sb = new StringBuilder() ;
 		for (String s : wp.getLines()) {
@@ -1039,9 +817,6 @@ public class SmartMeterTexasDataCollector {
 		}
 	    }
 	    nameValuePairs.addAll(al) ;
-//	    for (String name : m.keySet()) {
-//		nameValuePairs.add(new NameValuePair(name, m.get(name))) ;
-//	    }
 	    String pageURL = "https://www.smartmetertexas.com" + addressSuffix ;
 	    msg("<br>===========================") ;
 	    msg("Attempting to get data from") ;
@@ -1087,6 +862,23 @@ public class SmartMeterTexasDataCollector {
 	    //
 	    client.setState(state) ;
 	    msg(newCookie) ;
+	    msg("<br>===========================") ;
+
+	    msg("<br>===========================") ;
+	    msg("<br>===========================") ;
+	    msg("Adding the request headers:") ;
+	    method.addRequestHeader("Accept", 
+		    "text/html,application/xhtml+xml,"+
+		    "application/xml;q=0.9,*/*;q=0.8") ;
+	    method.addRequestHeader("Accept-Language", "en-US,en;q=0.5") ;
+	    method.addRequestHeader("Referer", 
+		    "https://www.smartmetertexas.com/texas/wps/myportal") ;
+	    method.addRequestHeader("Connection", "keep-alive") ;
+	    method.addRequestHeader("Upgrade-Insecure-Requests", "1") ;
+	    msg("REQUEST HEADERS1") ;
+	    for (Header header : method.getRequestHeaders()) {
+		msg(header) ;
+	    }
 	    msg("<br>===========================") ;
 	    WebPage wp = getPage(
 		    pageURL,nameValuePairs, null);
@@ -1152,28 +944,24 @@ public class SmartMeterTexasDataCollector {
 			for (String line : wp.getLines()) {
 			    sb.append(line) ;
 			}
-			System.out.println("=====     Show page.     =====") ;
+			System.out.println("=====     SHOW PAGE.     =====") ;
 			System.out.println(sb) ;
-			System.out.println("=====     Showed page.     =====") ;
+			System.out.println("=====     SHOWED PAGE.     =====") ;
 		    }
 		}
 		if (displayGetDataParameters) {
-			System.out.println("=====     Show parameters.     =====") ;
+			System.out.println("=====     SHOW PARAMETERS.     =====") ;
 			System.out.println("URL:") ;
 			System.out.println(pageURL) ;
-			System.out.println("NameValuePairs:") ;
+			System.out.println("NAMEVALUEPAIRS:") ;
 			for (NameValuePair nvp : nameValuePairs) {
 			    System.out.println(nvp) ;
 			}
-			System.out.println("Cookies:") ;
-			for (Cookie forCookie : state.getCookies()) {
-			    System.out.println(forCookie) ;
-			}
-			System.out.println("Request Headers:") ;
+			System.out.println("REQUEST HEADERS2:") ;
 			for (Header h : method.getRequestHeaders()) {
 			    System.out.println(h) ;
 			}
-			System.out.println("=====     Showed parameters.     =====") ;
+			System.out.println("=====     SHOWED PARAMETERS.     =====") ;
 		}
 		assertGoodLocation(wpData) ;
 		String dataString = wp.subString(wpData, 
