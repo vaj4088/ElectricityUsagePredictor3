@@ -27,6 +27,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 /**
  * A <tt>SmartMeterTexasDataCollector</tt> represents the actions needed to
@@ -605,8 +606,7 @@ public class SmartMeterTexasDataCollector {
     
     /**
      * A convenience method for displaying a line of text on System.out
-     * using the Event Dispatch Thread and assuming that this is done
-     * from the Event Dispatch Thread.
+     * using the Event Dispatch Thread.
      * 
      * @param ob
      *            An <tt>Object</tt> or a <tt>String</tt> to be displayed on
@@ -614,7 +614,12 @@ public class SmartMeterTexasDataCollector {
      *            be called.
      */
     void msgEDT(Object ob) {
-	msg(ob) ; 
+	SwingUtilities.invokeLater(new Runnable() {
+	    @Override
+	    public void run() {
+		msg(ob) ;
+	    }
+	}) ;
     }
     
     /*
@@ -722,6 +727,12 @@ public class SmartMeterTexasDataCollector {
 	WebPage login() {
 	    List<NameValuePair> nameValuePairs = new ArrayList<>();
 
+	    //
+	    // <><><><><>  Get a web page  <><><><><><>
+	    //
+	    //
+	    //  <><><><><>  This web page may be UNNECESSARY.  <><><><><><>
+	    //
 	    getPage("https://www.smartmetertexas.com:443/CAP/public/"); // 91
 
 	    nameValuePairs.add(new NameValuePair("pass_dup", ""));
@@ -729,6 +740,12 @@ public class SmartMeterTexasDataCollector {
 	    nameValuePairs.add(new NameValuePair("password", "bri2bri"));
 	    nameValuePairs.add(new NameValuePair("buttonName", ""));
 	    nameValuePairs.add(new NameValuePair("login-form-type", "pwd"));
+	    //
+	    // <><><><><>  Get a web page  <><><><><><>
+	    //
+	    //
+	    //  <><><><><>  This web page is REQUIRED.  <><><><><><>
+	    //
 	    WebPage wp = getPage(
 		    "https://www.smartmetertexas.com:443/pkmslogin.form",
 		    nameValuePairs, null); // 114 POST- sets some cookies and
@@ -745,6 +762,17 @@ public class SmartMeterTexasDataCollector {
 	     * 302 Found 116 GET - sets some cookies.
 	     */
 	    addressSuffix = extractAddressFromLogin(wp);
+	    /*
+	     * Need to add getting a web page so that some cookies are set.
+	     * 
+	     */
+	    //
+	    // <><><><><>  Get a web page  <><><><><><>
+	    //
+	    getPage("https://www.smartmetertexas.com/texas/wps/myportal") ;
+	    /*
+	     * 
+	     */
 	    return wp ;
 	}
 
@@ -800,11 +828,7 @@ public class SmartMeterTexasDataCollector {
 //		    new NameValuePair("viewUsage_startDate", dateString)) ; // <<<<<<<<<<<< Class DateTimeFormatter "MM'%2F'dd'%2F'yyyy"
 //	    nameValuePairs.add(
 //		    new NameValuePair("viewUsage_endDate"  , dateString)) ; // <<<<<<<<<<<< Class DateTimeFormatter "MM'%2F'dd'%2F'yyyy"
-	    //
-	    // Get the hidden input fields in the web page as a Map
-	    // (the names seem to be somewhat randomized each time) and
-	    // add all of the Map elements into the nameValuePairs List. 
-	    //
+
 	    ArrayList<NameValuePair> al = Util.makeArrayList(
 		    getSomeFieldsInFirstFormSMT(webPage)) ;
 	    ListIterator<NameValuePair> lit = al.listIterator() ;
@@ -818,17 +842,17 @@ public class SmartMeterTexasDataCollector {
 	    }
 	    nameValuePairs.addAll(al) ;
 	    String pageURL = "https://www.smartmetertexas.com" + addressSuffix ;
-	    msg("<br>===========================") ;
-	    msg("Attempting to get data from") ;
-	    msg(pageURL) ;
-	    msg("using the following parameters") ;
+	    System.out.println("<br>===========================") ;
+	    System.out.println("Attempting to get data from") ;
+	    System.out.println(pageURL) ;
+	    System.out.println("using the following parameters") ;
 	    Iterator<NameValuePair> it = nameValuePairs.iterator() ;
 	    while (it.hasNext()) {
 		msg(it.next());
 	    }
-	    msg("<br>===========================") ;
-	    msg("<br>===========================") ;
-	    msg("Adding the cookie:") ;
+	    System.out.println("<br>===========================") ;
+	    System.out.println("<br>===========================") ;
+	    System.out.println("Adding the cookie:") ;
 	    //
 	    // Get the client's current state.
 	    //
@@ -861,12 +885,13 @@ public class SmartMeterTexasDataCollector {
 	    //  Update the client's state.
 	    //
 	    client.setState(state) ;
-	    msg(newCookie) ;
-	    msg("<br>===========================") ;
+	    System.out.println(newCookie) ;
+	    System.out.println("<br>===========================") ;
 
-	    msg("<br>===========================") ;
-	    msg("<br>===========================") ;
-	    msg("Adding the request headers:") ;
+	    System.out.println("<br>===========================") ;
+	    System.out.println("<br>===========================") ;
+	    System.out.println(
+		    "Adding the request headers (and fixing Content-Length):") ;
 	    method.addRequestHeader("Accept", 
 		    "text/html,application/xhtml+xml,"+
 		    "application/xml;q=0.9,*/*;q=0.8") ;
@@ -875,11 +900,41 @@ public class SmartMeterTexasDataCollector {
 		    "https://www.smartmetertexas.com/texas/wps/myportal") ;
 	    method.addRequestHeader("Connection", "keep-alive") ;
 	    method.addRequestHeader("Upgrade-Insecure-Requests", "1") ;
-	    msg("REQUEST HEADERS1") ;
-	    for (Header header : method.getRequestHeaders()) {
-		msg(header) ;
+	    method.removeRequestHeader("Content-Length") ;
+	    System.out.println("     ATTEMPTED to remove Content-Length.") ;
+	    //
+	    // Get the content length.
+	    //
+	    
+	    System.out.println("     Accumulating new Content-Length.") ;
+	    //
+	    // Initialized to account for the subtraction 
+	    // that will be needed.
+	    //
+	    int contentLengthAccumulator = -1 ;
+	    for (NameValuePair nvp : nameValuePairs) {
+		contentLengthAccumulator += nvp.getName().length() ;
+		contentLengthAccumulator += nvp.getValue().length() ;
+		contentLengthAccumulator += 2 ;  // For '&' and ';'
 	    }
-	    msg("<br>===========================") ;
+	    if (contentLengthAccumulator == -1) {
+		contentLengthAccumulator = 0 ;  // No length to body.
+	    }
+	    method.addRequestHeader(
+		    "Content-Length", 
+		    Integer.toString(contentLengthAccumulator)) ;
+	    System.out.println("     Added new Content-Length.") ;
+	    System.out.println("REQUEST HEADERS1") ;
+	    for (Header header : method.getRequestHeaders()) {
+		System.out.println(header) ;
+	    }
+	    System.out.println("     Accumulated new Content-Length of ") ;
+	    System.out.println(Integer.toString(contentLengthAccumulator)) ;
+	    System.out.println(".     ") ;
+	    System.out.println("<br>===========================") ;
+	    //
+	    // <><><><><>  Get a web page  <><><><><><>
+	    //
 	    WebPage wp = getPage(
 		    pageURL,nameValuePairs, null);
 	    //
@@ -990,14 +1045,32 @@ public class SmartMeterTexasDataCollector {
 	    //
 	    // Conversation 173 GET - sets some cookies.
 	    //
+	    //
+	    // <><><><><>  Get a web page  <><><><><><>
+	    //
+	    //
+	    // This clears some cookies but is otherwise UNNECESSARY.
+	    //
 	    getPage("https://www.smartmetertexas.com:443" + addressSuffix);
 	    //
 	    // Conversation 174 GET - sets some cookies.
+	    //
+	    //
+	    // <><><><><>  Get a web page  <><><><><><>
+	    //
+	    //
+	    // <><><><><>  This web page is REQUIRED.
 	    //
 	    getPage("https://www.smartmetertexas.com:443/pkmslogout?"
 		    + "filename=SMTLogout.html&type=public&lang=en");
 	    //
 	    // Conversation 175 GET - sets some cookies.
+	    //
+	    //
+	    // <><><><><>  Get a web page  <><><><><><>
+	    //
+	    //
+	    //  <><><><><>  This web page may be UNNECESSARY.  <><><><><><>
 	    //
 	    getPage("https://www.smartmetertexas.com:443/CAP/public");
 	    // Response is
