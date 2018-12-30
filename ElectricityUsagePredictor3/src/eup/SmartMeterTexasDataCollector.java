@@ -21,12 +21,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 /**
@@ -62,14 +65,14 @@ public class SmartMeterTexasDataCollector {
     
     // The following can be enabled to provide some debugging
     // information on System.out
-    private boolean displayResponseBody = true;
+    private boolean displayResponseBody = false;
     private boolean displayQueryOptions = false;
     private boolean displayHeadersAndFooters = false;
     private boolean displayCookies = false;
     private boolean displayPostParameters = false;
     boolean displayWebPageExtractAddressFromGetData = false ;
-    boolean displayGetDataPage = true ;
-    boolean displayGetDataParameters = true ;
+    boolean displayGetDataPage = false ;
+    boolean displayGetDataParameters = false ;
     
 
     static final AtomicInteger ai = new AtomicInteger() ;
@@ -82,6 +85,7 @@ public class SmartMeterTexasDataCollector {
 //	msg("SmartMeterTexasDataCollector construction start.") ;
 	client = new HttpClient();
 //	msg("SmartMeterTexasDataCollector construction end.") ;
+	useProxy(client) ;
     }
 
     /**
@@ -558,7 +562,8 @@ public class SmartMeterTexasDataCollector {
      *            Required but currently unused.
      */
     public static void main(String[] args) {
-	System.exit(0);
+	ElectricityUsagePredictor.main(null) ;
+//	System.exit(0);
     }
 
     static InputSource makeWebPageInputSource(WebPage wp) {
@@ -621,7 +626,60 @@ public class SmartMeterTexasDataCollector {
 	    }
 	}) ;
     }
-    
+	
+	@SuppressWarnings("boxing")
+	private final void useProxy(HttpClient h) {
+	    int result = -1 ;
+/*
+* 
+NOTE: you must make sure you are NOT on the EDT when you call this code, 
+as the get() will never return and the EDT will never be released to go 
+execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
+*
+*/
+	    Callable<Integer> c = new Callable<Integer>() {
+		@Override public Integer call() {
+		    return JOptionPane.showConfirmDialog(null,
+			    "Do you want to use the proxy?") ;
+		}
+	    } ;
+	    FutureTask<Integer> dialogTask = 
+		    new FutureTask<Integer>(c);
+	    if (SwingUtilities.isEventDispatchThread()) {
+		try {
+		    result = c.call() ;
+		} catch (Exception e) {
+		    // TODO Auto-generated catch block
+		    e.printStackTrace();
+		}
+	    } else {
+		try {
+		    SwingUtilities.invokeAndWait(dialogTask);
+		} catch (InvocationTargetException e1) {
+		    // TODO Auto-generated catch block
+		    e1.printStackTrace();
+		} catch (InterruptedException e1) {
+		    // TODO Auto-generated catch block
+		    e1.printStackTrace();
+		}
+		try {
+		    result = dialogTask.get().intValue() ;
+		} catch (InterruptedException e) {
+		    // TODO Auto-generated catch block
+		    e.printStackTrace();
+		} catch (ExecutionException e) {
+		    // TODO Auto-generated catch block
+		    e.printStackTrace();
+		}
+	    }
+	    if (result == JOptionPane.YES_OPTION) {
+		HostConfiguration hostConfiguration = 
+			h.getHostConfiguration() ;
+		hostConfiguration.setProxy("localhost", 8080)  ;
+		h.setHostConfiguration(hostConfiguration) ;
+	    }
+	}
+   
     /*
      * javadocs for HttpClient are at
      * http://hc.apache.org/httpcomponents-client-ga/
@@ -731,6 +789,14 @@ public class SmartMeterTexasDataCollector {
 	    // <><><><><>  Get a web page  <><><><><><>
 	    //
 	    //
+	    //  <><><><><>  This web page is for debugging.  <><><><><><>
+	    //
+	    getPage("http://www.ubuntu.com/debug/login_start");
+
+	    //
+	    // <><><><><>  Get a web page  <><><><><><>
+	    //
+	    //
 	    //  <><><><><>  This web page may be UNNECESSARY.  <><><><><><>
 	    //
 	    getPage("https://www.smartmetertexas.com:443/CAP/public/"); // 91
@@ -773,6 +839,15 @@ public class SmartMeterTexasDataCollector {
 	    /*
 	     * 
 	     */
+
+	    //
+	    // <><><><><>  Get a web page  <><><><><><>
+	    //
+	    //
+	    //  <><><><><>  This web page is for debugging.  <><><><><><>
+	    //
+	    getPage("http://www.ubuntu.com/debug/login_end");
+	    
 	    return wp ;
 	}
 
@@ -817,12 +892,22 @@ public class SmartMeterTexasDataCollector {
 /*
  * _bowStEvent=Usage%2Fportlet%2FUsageCustomerMetersPortlet%21fireEvent%3AForm%3AViewUsagePage_SaveDataSubmitEvent&tag_UserLocale=en&reportType=INTERVAL&viewUsage_startDate=10%2F12%2F2018&viewUsage_endDate=10%2F12%2F2018&viewusage_but_updaterpt=Update+Report&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515NRCAdmin_00515Default_00515Default_00515Default_00515Esiid_0051516674c265d7_00515bf4cc=&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515NRCAdmin_00515Default_00515Default_00515Default_00515Esiid_0051516674c265d7_00515bf4cc1=&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515NRCAdmin_00515Default_00515Default_00515Default_00515Esiid_0051516674c265d7_00515bf4cc2=&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515NRCAdmin_00515Default_00515Default_00515Default_00515Esiid_0051516674c265d7_00515bf4cc2=
  */
+
+	    //
+	    // <><><><><>  Get a web page  <><><><><><>
+	    //
+	    //
+	    //  <><><><><>  This web page is for debugging.  <><><><><><>
+	    //
+	    getPage("http://www.ubuntu.com/debug/get_Data_Start");
+
 	    //
 	    // Preparing to do POST 164
 	    //
 //	    nameValuePairs.add(new NameValuePair("reportType", "DAILY"));
 	    DateTimeFormatter dtf = 
-		    DateTimeFormatter.ofPattern("MM'%2F'dd'%2F'yyyy") ;
+//		    DateTimeFormatter.ofPattern("MM'%2F'dd'%2F'yyyy") ;
+		    DateTimeFormatter.ofPattern("MM'/'dd'/'yyyy") ;
 	    String dateString = date.format(dtf) ;
 //	    nameValuePairs.add(
 //		    new NameValuePair("viewUsage_startDate", dateString)) ; // <<<<<<<<<<<< Class DateTimeFormatter "MM'%2F'dd'%2F'yyyy"
@@ -1039,9 +1124,27 @@ public class SmartMeterTexasDataCollector {
 	     * NOW : GET THE NEW addressSuffix !!!
 	     */
 	    addressSuffix = extractAddressFromGetData(wp);
+
+	    //
+	    // <><><><><>  Get a web page  <><><><><><>
+	    //
+	    //
+	    //  <><><><><>  This web page is for debugging.  <><><><><><>
+	    //
+	    getPage("http://www.ubuntu.com/debug/get_Data_End");
+
 	}
 	
 	void logout() {
+
+	    //
+	    // <><><><><>  Get a web page  <><><><><><>
+	    //
+	    //
+	    //  <><><><><>  This web page is for debugging.  <><><><><><>
+	    //
+	    getPage("http://www.ubuntu.com/debug/logout_start");
+
 	    //
 	    // Conversation 173 GET - sets some cookies.
 	    //
@@ -1075,6 +1178,15 @@ public class SmartMeterTexasDataCollector {
 	    getPage("https://www.smartmetertexas.com:443/CAP/public");
 	    // Response is
 	    // 301 Moved Permanently, which automatically causes 176.
+
+	    //
+	    // <><><><><>  Get a web page  <><><><><><>
+	    //
+	    //
+	    //  <><><><><>  This web page is for debugging.  <><><><><><>
+	    //
+	    getPage("http://www.ubuntu.com/debug/logout_end");
+
 	}
 
 	public void invoke() {
