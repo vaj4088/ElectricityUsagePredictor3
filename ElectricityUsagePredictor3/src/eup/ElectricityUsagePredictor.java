@@ -19,6 +19,7 @@ import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -63,11 +64,17 @@ implements ActionListener {
 
     Feedbacker fb;
 
-	static
-	java.util.concurrent.atomic.AtomicReference<ElectricityUsagePredictor>
-	  gui2 = new 
-	    java.util.concurrent.atomic.AtomicReference
-	      <ElectricityUsagePredictor>() ;
+    static
+    	java.util.concurrent.atomic.AtomicReference<ElectricityUsagePredictor>
+    		guiAtomicReference = new 
+    		java.util.concurrent.atomic.AtomicReference
+    		<ElectricityUsagePredictor>() ;
+    
+    private CountDownLatch cdl ;
+    private Date cBD ;
+    private Date cD ;
+    private Date nBD ;
+
     /**
      * 
      */
@@ -275,6 +282,7 @@ implements ActionListener {
      * @param args
      */
     public static void main(String[] args) {
+	Integer h ;
 	//
 	// ElectricityUsagePredictor extends JFrame and
 	// thus must be set up via the
@@ -294,7 +302,7 @@ implements ActionListener {
 			    new ElectricityUsagePredictor(
 			    "Electricity Usage Predictor");
 		    gui.fb.log("Finished setting up GUI.");
-		    gui2.set(gui);
+		    guiAtomicReference.set(gui);
 		}
 	    });
 	} catch (InterruptedException e) {
@@ -314,61 +322,93 @@ implements ActionListener {
 //	s = "The date of 20180801 has been formatted as " + s ;
 //	ElectricityUsagePredictor gui = gui2.get() ; 
 //	gui.msgEDT(s) ;
+	while (true) {
+	    ElectricityUsagePredictor gui = guiAtomicReference.get() ;
+	    gui.cdl = new CountDownLatch(1) ;
+	    try {
+		gui.cdl.await() ;
+	    } catch (InterruptedException e) {
+		e.printStackTrace();
+		// Restore the interrupted status
+		Thread.currentThread().interrupt();
+	    }
+	    SmartMeterTexasDataCollector smtdc = 
+		    new SmartMeterTexasDataCollector() ;
+	    //
+	    // cBDLD is current current Bill Date as a Local Date
+	    //
+	    LocalDate cBDLD = gui.cBD.toInstant().
+		    atZone(ZoneId.systemDefault()).
+		    toLocalDate() ;
+	    //
+	    // cDLD is current date as a Local Date.
+	    //
+	    LocalDate cDLD = gui.cD.toInstant().
+		    atZone(ZoneId.systemDefault()).
+		    toLocalDate() ;
+	    int currentMeterReading     = 
+		    (smtdc.new GetData(cBDLD)).getStartRead() ;
+	    int currentBillMeterReading = 
+		    (smtdc.new GetData(cDLD )).getStartRead() ;
+//	    int currentBillMeterReading = 0 ; // TEMPORARY: DELETE, + UNCOMMENT ABOVE.
+	    Predictor predictor = new Predictor.Builder().
+		    currentBillDate(cBDLD).
+		    currentBillMeterReading(currentBillMeterReading).
+		    currentDate(cDLD).
+		    currentMeterReading(currentMeterReading).
+		    nextBillDate(gui.nBD.toInstant().
+			    atZone(ZoneId.systemDefault()).toLocalDate()).
+		    build();
+	    //
+	    //  Above does not require EDT.
+	    //
+	    //  Below outputs to gui so should be on EDT.
+	    //
+	    gui.msgEDT("");
+	    gui.msgNoNewlineEDT("Current Bill Date: ");
+	    gui.msgEDT(predictor.getDateBillCurrent());
+	    gui.msgNoNewlineEDT("Current Bill Meter Reading: ");
+	    h = new Integer(predictor.getMeterReadingBillCurrent()) ;
+	    gui.msgEDT(h) ;
+	    gui.msgEDT("");
+	    gui.msgNoNewlineEDT("Current      Date   : ");
+	    gui.msgEDT(predictor.getDateCurrent());
+	    gui.msgNoNewlineEDT("Current     Meter Reading : ");
+	    h = new Integer(predictor.getMeterReadingCurrent()) ;
+	    gui.msgEDT(h);
+	    gui.msgEDT("");
+	    gui.msgNoNewlineEDT("Next    Bill Date   : ");
+	    gui.msgEDT(predictor.getDateBillNext());
+	    int predictedUsage = predictor.predictUsage() ;
+	    PrintStream where = System.err ;
+	    if ((predictedUsage>=500) && (predictedUsage<=1000)) {
+		where = System.out ;
+	    }
+	    where.print("Predicted   Usage : ") ;
+	    where.println(predictedUsage) ;
+	    gui.msgEDT("") ;
+	    gui.msgEDT(">> "+predictor.getDateBillCurrent().toString()) ;
+	}
     }
     
     @Override
     public void actionPerformed(ActionEvent ae) {
  	msg("Action Event " + ae.toString()) ;
- 	ElectricityUsagePredictor gui = gui2.get() ;
+ 	ElectricityUsagePredictor gui = guiAtomicReference.get() ;
  	JDatePickerImpl dPCBD = gui.datePickerCurrentBillDate ;
  	JDatePickerImpl dPCD  = gui.datePickerCurrentDate ;
  	JDatePickerImpl dPNBD = gui.datePickerNextBillDate ;
- 	Date cBD = (Date) dPCBD.getModel().getValue() ;
- 	Date cD  = (Date)  dPCD.getModel().getValue() ;
- 	Date nBD = (Date) dPNBD.getModel().getValue() ;
- 	SmartMeterTexasDataCollector smtdc = 
- 		new SmartMeterTexasDataCollector() ;
- 	LocalDate cBDLD = cBD.toInstant().
-		atZone(ZoneId.systemDefault()).
-		toLocalDate() ;
- 	LocalDate cDLD = cD.toInstant().
-		atZone(ZoneId.systemDefault()).
-		toLocalDate() ;
- 	int currentMeterReading     = 
- 		(smtdc.new GetData(cBDLD)).getStartRead() ;
-// 	int currentBillMeterReading = 
-// 		(smtdc.new GetData(cDLD )).getStartRead() ;
- 	int currentBillMeterReading = 0 ; // TEMPORARY: DELETE, + UNCOMMENT ABOVE.
-	Predictor predictor = new Predictor.Builder().
- 		currentBillDate(cBDLD).
- 		currentBillMeterReading(currentBillMeterReading).
- 		currentDate(cDLD).
- 		currentMeterReading(currentMeterReading).
- 		nextBillDate(nBD.toInstant().
- 			atZone(ZoneId.systemDefault()).toLocalDate()).
-		build();
-	msg("");
-	msgNoNewline("Current Bill Date: ");
-	msg(predictor.getDateBillCurrent());
-	msgNoNewline("Current Bill Meter Reading: ");
-	msg(predictor.getMeterReadingBillCurrent());
-	msg("");
-	msgNoNewline("Current      Date   : ");
-	msg(predictor.getDateCurrent());
-	msgNoNewline("Current     Meter Reading : ");
-	msg(predictor.getMeterReadingCurrent());
-	msg("");
-	msgNoNewline("Next    Bill Date   : ");
-	msg(predictor.getDateBillNext());
- 	int predictedUsage = predictor.predictUsage() ;
- 	PrintStream where = System.err ;
- 	if ((predictedUsage>=500) && (predictedUsage<=1000)) {
- 	    where = System.out ;
- 	}
- 	where.print("Predicted   Usage : ") ;
- 	where.println(predictedUsage) ;
- 	msg("") ;
- 	msg(">> "+predictor.getDateBillCurrent().toString()) ;
+ 	cBD = (Date) dPCBD.getModel().getValue() ;
+ 	cD  = (Date)  dPCD.getModel().getValue() ;
+ 	nBD = (Date) dPNBD.getModel().getValue() ;
+ 	//
+ 	//  Above should be on EDT.
+ 	//
+ 	//
+ 	//  Below does not require EDT and
+ 	//  gets us off of the EDT.
+ 	//
+ 	cdl.countDown() ;
      }
 
     /**
@@ -429,6 +469,27 @@ implements ActionListener {
 	    @Override
 	    public void run() {
 		msg(ob) ;
+	    }
+	    
+	});
+    }
+    
+    /**
+     * A convenience method for displaying a line of text 
+     * without appending a newline character
+     * on System.out
+     * using the Event Dispatch Thread.
+     * 
+     * @param ob
+     *            An <tt>Object</tt> or a <tt>String</tt> to be displayed on
+     *            System.out. If an <tt>Object</tt>, its toString() method will
+     *            be called.
+     */
+    void msgNoNewlineEDT(Object ob) {
+	javax.swing.SwingUtilities.invokeLater(new Runnable() {
+	    @Override
+	    public void run() {
+		msgNoNewline(ob) ;
 	    }
 	    
 	});

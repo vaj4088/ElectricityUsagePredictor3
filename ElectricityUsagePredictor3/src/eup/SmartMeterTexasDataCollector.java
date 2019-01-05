@@ -22,9 +22,9 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+//import java.util.concurrent.ExecutorService;
+//import java.util.concurrent.Executors;
+//import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.BoxLayout;
@@ -59,7 +59,7 @@ public class SmartMeterTexasDataCollector {
     HttpClient client; // Handles the work, holds context
     // (i.e. cookies).
     PostMethod method ;  //  The method (e.g. POST, GET) used for web access.
-    ExecutorService executor = Executors.newSingleThreadExecutor() ;
+//    ExecutorService executor = Executors.newSingleThreadExecutor() ;
     
     String addressSuffix = "" ;
     
@@ -76,6 +76,8 @@ public class SmartMeterTexasDataCollector {
     
 
     static final AtomicInteger ai = new AtomicInteger() ;
+    
+    private static final String SLASH = "/" ;
 	
     /**
      * No-argument constructor for getting Smart Meter of Texas  information
@@ -751,6 +753,9 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    if (commentStart != -1) {
 		s = s.substring(0, commentStart - 1) ;
 	    }
+	    if (!s.startsWith(SLASH)) {
+		s = SLASH + s ;
+	    }
 	    msg("New suffix from login: " + s + " .");
 	    return s;
 	}
@@ -769,6 +774,9 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    WPLocation wpl2 = wp.indexOf(goTo, wpl.getLine(), wpl.getColumn());
 	    assertGoodLocation(wpl2);
 	    String s = wp.subString(wpl, startFrom3, goTo);
+	    if (!s.startsWith(SLASH)) {
+		s = SLASH + s ;
+	    }
 	    msg("New suffix from Get Data: " + s + " .");
 	    return s;
 	}
@@ -791,7 +799,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    //
 	    //  <><><><><>  This web page is for debugging.  <><><><><><>
 	    //
-	    getPage("http://www.ubuntu.com/debug/login_start");
+	    getPage("https://www.ubuntu.com/debug/login_start");
 
 	    //
 	    // <><><><><>  Get a web page  <><><><><><>
@@ -846,7 +854,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    //
 	    //  <><><><><>  This web page is for debugging.  <><><><><><>
 	    //
-	    getPage("http://www.ubuntu.com/debug/login_end");
+	    getPage("https://www.ubuntu.com/debug/login_end");
 	    
 	    return wp ;
 	}
@@ -899,7 +907,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    //
 	    //  <><><><><>  This web page is for debugging.  <><><><><><>
 	    //
-	    getPage("http://www.ubuntu.com/debug/get_Data_Start");
+	    getPage("https://www.ubuntu.com/debug/get_Data_Start");
 
 	    //
 	    // Preparing to do POST 164
@@ -1031,11 +1039,24 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    //
 	    WPLocation resourceMissing = wp.indexOf(msgNoResource) ;
 	    if (!badLocation(resourceMissing)) {
-		fb.log("Resource is missing, "
-			+ "fix the program and please try again later.",
-			Feedbacker.TO_FILE + Feedbacker.TO_GUI + 
-			Feedbacker.TO_OUT
-			+ Feedbacker.FLUSH) ;
+		StringBuilder sb = new StringBuilder("Resource is missing, "
+			+ "fix the program and please try again later.") ;
+		if (null == fb) {
+		    System.out.println(sb);
+		} else {
+		    fb.log(sb,
+			    Feedbacker.TO_FILE + Feedbacker.TO_GUI + 
+			    Feedbacker.TO_OUT
+			    + Feedbacker.FLUSH) ;
+		}
+		try {
+		    Thread.sleep(5000) ;
+		} catch (InterruptedException e) {
+		    // TODO Auto-generated catch block
+		    e.printStackTrace();
+		    // Restore the interrupted status
+		    Thread.currentThread().interrupt();
+		}
 		System.exit(-26) ;
 	    }
 	    
@@ -1047,10 +1068,26 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 		synchronized(lock) {
 		    dataValid = false ;
 		}
-		fb.log("No predicting is possible now, "
-			+ "please try again later.",
-			Feedbacker.TO_FILE + Feedbacker.TO_GUI
-			+ Feedbacker.FLUSH);
+		StringBuilder sb = new StringBuilder(
+			"No predicting is possible now, "
+				+ "please try again later.") ;
+		if (null == fb) {
+		    System.out.println(sb);
+		} else {
+		    fb.log(sb,
+			    Feedbacker.TO_FILE + Feedbacker.TO_GUI + 
+			    Feedbacker.TO_OUT
+			    + Feedbacker.FLUSH) ;
+		}
+		try {
+		    Thread.sleep(5000) ;
+		} catch (InterruptedException e) {
+		    // TODO Auto-generated catch block
+		    e.printStackTrace();
+		    // Restore the interrupted status
+		    Thread.currentThread().interrupt();
+		}
+		System.exit(-27) ;
 	    } else {
 		/*
 		 * NOW : GET THE DATA !!!
@@ -1131,7 +1168,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    //
 	    //  <><><><><>  This web page is for debugging.  <><><><><><>
 	    //
-	    getPage("http://www.ubuntu.com/debug/get_Data_End");
+	    getPage("https://www.ubuntu.com/debug/get_Data_End");
 
 	}
 	
@@ -1143,7 +1180,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    //
 	    //  <><><><><>  This web page is for debugging.  <><><><><><>
 	    //
-	    getPage("http://www.ubuntu.com/debug/logout_start");
+	    getPage("https://www.ubuntu.com/debug/logout_start");
 
 	    //
 	    // Conversation 173 GET - sets some cookies.
@@ -1185,17 +1222,26 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    //
 	    //  <><><><><>  This web page is for debugging.  <><><><><><>
 	    //
-	    getPage("http://www.ubuntu.com/debug/logout_end");
+	    getPage("https://www.ubuntu.com/debug/logout_end");
 
 	}
 
+	public void invoke() {
+	    WebPage wp = login();
+	    getData(wp);
+	    logout();
+	}
+	
+/*
+ * 
 	public void invoke() {
 //	    msg("GetData run about to login() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
 	    Future<WebPage> fLogin = executor.submit(new Callable<WebPage>() {
 		@SuppressWarnings("unused")
 		@Override
 		public WebPage call() throws Exception {
-		    msg("GetData run about to login() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
+		    msg("GetData run about to login() #" + 
+			    Integer.toString(ai.getAndIncrement()) + ".") ;
 		    return login() ;
 		}
 	    } ) ;
@@ -1204,8 +1250,9 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    Future<Integer> fGetData = executor.submit(new Callable<Integer>() {
 		@Override
 		public Integer call() throws Exception {
-		    msg("GetData run about to getData() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
-		    WebPage wp = fLogin.get();
+		    msg("GetData run about to getData() #" + 
+			    Integer.toString(ai.getAndIncrement()) + ".") ;
+		    WebPage wp = fLogin.get();  //  Ensure sequencing.
 		    getData(wp) ;
 		    return Integer.valueOf(1) ;
 		}
@@ -1219,8 +1266,9 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 		    //
 		    // The following line removes an IDE warning.
 		    //
-		    Integer throwaway = fGetData.get() ;
-		    msg("GetData run about to logout() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
+		    Integer throwaway = fGetData.get() ;  //  Ensure sequencing.
+		    msg("GetData run about to logout() #" + 
+			    Integer.toString(ai.getAndIncrement()) + ".") ;
 		    logout() ;
 		    return Integer.valueOf(1) ;
 		}
@@ -1228,6 +1276,8 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 //	    logout();
 	    fLogout.isDone() ;  //  Removes an IDE warning.
 	}
+	*
+	*/
 
 	/**
 	 * @return the date
@@ -1256,7 +1306,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	}
 
 	/**
-	 * @return the startReadValid
+	 * @return whether the data is valid
 	 */
 	public boolean isDataValid() {
 	    boolean value ;
