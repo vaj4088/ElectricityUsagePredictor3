@@ -67,17 +67,27 @@ public class Predictor {
 		    getDateBillNext()) ;
 	    long usageDays   = ChronoUnit.DAYS.between(getDateBillCurrent(),
 		    getDateCurrent()) ;
-	    if (usageDays<=0) {
-		usageDays   = ChronoUnit.DAYS.between(
-			(getDateBillCurrent()).minusMonths(1),
-			    getDateCurrent()) ;
-	    }
-	    int usage = getMeterReadingCurrent() - getMeterReadingBillCurrent() ;
-	    return Math.round(((float)billingDays/usageDays) * usage) ;
+//	    if (usageDays<=0) {
+//		usageDays   = ChronoUnit.DAYS.between(
+//			(getDateBillCurrent()).minusMonths(1),
+//			    getDateCurrent()) ;
+//	    }
+	    int usage = 
+		    getMeterReadingCurrent() - getMeterReadingBillCurrent() ;
+	    int result = (int)(
+		    ( ((float)billingDays)/((float)usageDays) ) * usage
+		    ) ;
+	    return result ;
 	}
 
 	public int predictMeterReading() {
 	    return predictUsage() + getMeterReadingBillCurrent() ;
+	}
+	
+	public long daysRemaining() {
+	    long result = ChronoUnit.DAYS.
+		    between(getDateCurrent(), getDateBillNext()) ;
+	    return result ;
 	}
 
 public static class Builder {

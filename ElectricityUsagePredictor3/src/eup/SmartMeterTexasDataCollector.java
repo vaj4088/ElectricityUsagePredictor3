@@ -731,6 +731,11 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	}
 
 	private String extractAddressFromLogin(WebPage wp) {
+	    /*
+	     * May also get
+	     * 
+	     * Third-party server not responding.
+	     */
 	    String startFrom1 = "value='Update Report'";
 	    String startFrom2 = "onclick=\"this.form.action = &quot;";
 	    String goTo = "&quot;;";
@@ -756,7 +761,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    if (!s.startsWith(SLASH)) {
 		s = SLASH + s ;
 	    }
-	    msg("New suffix from login: " + s + " .");
+//	    msg("New suffix from login: " + s + " .");
 	    return s;
 	}
 
@@ -777,7 +782,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    if (!s.startsWith(SLASH)) {
 		s = SLASH + s ;
 	    }
-	    msg("New suffix from Get Data: " + s + " .");
+//	    msg("New suffix from Get Data: " + s + " .");
 	    return s;
 	}
 
@@ -799,7 +804,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    //
 	    //  <><><><><>  This web page is for debugging.  <><><><><><>
 	    //
-	    getPage("https://www.ubuntu.com/debug/login_start");
+//	    getPage("https://www.ubuntu.com/debug/login_start");
 
 	    //
 	    // <><><><><>  Get a web page  <><><><><><>
@@ -854,7 +859,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    //
 	    //  <><><><><>  This web page is for debugging.  <><><><><><>
 	    //
-	    getPage("https://www.ubuntu.com/debug/login_end");
+//	    getPage("https://www.ubuntu.com/debug/login_end");
 	    
 	    return wp ;
 	}
@@ -907,7 +912,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    //
 	    //  <><><><><>  This web page is for debugging.  <><><><><><>
 	    //
-	    getPage("https://www.ubuntu.com/debug/get_Data_Start");
+//	    getPage("https://www.ubuntu.com/debug/get_Data_Start");
 
 	    //
 	    // Preparing to do POST 164
@@ -935,17 +940,17 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    }
 	    nameValuePairs.addAll(al) ;
 	    String pageURL = "https://www.smartmetertexas.com" + addressSuffix ;
-	    System.out.println("<br>===========================") ;
-	    System.out.println("Attempting to get data from") ;
-	    System.out.println(pageURL) ;
-	    System.out.println("using the following parameters") ;
-	    Iterator<NameValuePair> it = nameValuePairs.iterator() ;
-	    while (it.hasNext()) {
-		msg(it.next());
-	    }
-	    System.out.println("<br>===========================") ;
-	    System.out.println("<br>===========================") ;
-	    System.out.println("Adding the cookie:") ;
+//	    System.out.println("<br>===========================") ;
+//	    System.out.println("Attempting to get data from") ;
+//	    System.out.println(pageURL) ;
+//	    System.out.println("using the following parameters") ;
+//	    Iterator<NameValuePair> it = nameValuePairs.iterator() ;
+//	    while (it.hasNext()) {
+//		msg(it.next());
+//	    }
+//	    System.out.println("<br>===========================") ;
+//	    System.out.println("<br>===========================") ;
+//	    System.out.println("Adding the cookie:") ;
 	    //
 	    // Get the client's current state.
 	    //
@@ -978,13 +983,13 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    //  Update the client's state.
 	    //
 	    client.setState(state) ;
-	    System.out.println(newCookie) ;
-	    System.out.println("<br>===========================") ;
-
-	    System.out.println("<br>===========================") ;
-	    System.out.println("<br>===========================") ;
-	    System.out.println(
-		    "Adding the request headers (and fixing Content-Length):") ;
+//	    System.out.println(newCookie) ;
+//	    System.out.println("<br>===========================") ;
+//
+//	    System.out.println("<br>===========================") ;
+//	    System.out.println("<br>===========================") ;
+//	    System.out.println(
+//		    "Adding the request headers (and fixing Content-Length):") ;
 	    method.addRequestHeader("Accept", 
 		    "text/html,application/xhtml+xml,"+
 		    "application/xml;q=0.9,*/*;q=0.8") ;
@@ -994,12 +999,12 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    method.addRequestHeader("Connection", "keep-alive") ;
 	    method.addRequestHeader("Upgrade-Insecure-Requests", "1") ;
 	    method.removeRequestHeader("Content-Length") ;
-	    System.out.println("     ATTEMPTED to remove Content-Length.") ;
+//	    System.out.println("     ATTEMPTED to remove Content-Length.") ;
 	    //
 	    // Get the content length.
 	    //
 	    
-	    System.out.println("     Accumulating new Content-Length.") ;
+//	    System.out.println("     Accumulating new Content-Length.") ;
 	    //
 	    // Initialized to account for the subtraction 
 	    // that will be needed.
@@ -1016,15 +1021,15 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    method.addRequestHeader(
 		    "Content-Length", 
 		    Integer.toString(contentLengthAccumulator)) ;
-	    System.out.println("     Added new Content-Length.") ;
-	    System.out.println("REQUEST HEADERS1") ;
-	    for (Header header : method.getRequestHeaders()) {
-		System.out.println(header) ;
-	    }
-	    System.out.println("     Accumulated new Content-Length of ") ;
-	    System.out.println(Integer.toString(contentLengthAccumulator)) ;
-	    System.out.println(".     ") ;
-	    System.out.println("<br>===========================") ;
+//	    System.out.println("     Added new Content-Length.") ;
+//	    System.out.println("REQUEST HEADERS1") ;
+//	    for (Header header : method.getRequestHeaders()) {
+//		System.out.println(header) ;
+//	    }
+//	    System.out.println("     Accumulated new Content-Length of ") ;
+//	    System.out.println(Integer.toString(contentLengthAccumulator)) ;
+//	    System.out.println(".     ") ;
+//	    System.out.println("<br>===========================") ;
 	    //
 	    // <><><><><>  Get a web page  <><><><><><>
 	    //
@@ -1168,7 +1173,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    //
 	    //  <><><><><>  This web page is for debugging.  <><><><><><>
 	    //
-	    getPage("https://www.ubuntu.com/debug/get_Data_End");
+//	    getPage("https://www.ubuntu.com/debug/get_Data_End");
 
 	}
 	
@@ -1180,7 +1185,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    //
 	    //  <><><><><>  This web page is for debugging.  <><><><><><>
 	    //
-	    getPage("https://www.ubuntu.com/debug/logout_start");
+//	    getPage("https://www.ubuntu.com/debug/logout_start");
 
 	    //
 	    // Conversation 173 GET - sets some cookies.
@@ -1222,7 +1227,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    //
 	    //  <><><><><>  This web page is for debugging.  <><><><><><>
 	    //
-	    getPage("https://www.ubuntu.com/debug/logout_end");
+//	    getPage("https://www.ubuntu.com/debug/logout_end");
 
 	}
 
@@ -1297,9 +1302,9 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 		dv = dataValid ;
 	    }
 	    if (!dv) {
-		msg("getStartRead about to start().") ;
+//		msg("getStartRead about to start().") ;
 		invoke() ;
-		msg("getStartRead after start().") ;
+//		msg("getStartRead after start().") ;
 		value = startRead ;
 	    }
 	    return value;

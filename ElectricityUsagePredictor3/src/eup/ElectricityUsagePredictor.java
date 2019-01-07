@@ -347,9 +347,9 @@ implements ActionListener {
 		    atZone(ZoneId.systemDefault()).
 		    toLocalDate() ;
 	    int currentMeterReading     = 
-		    (smtdc.new GetData(cBDLD)).getStartRead() ;
+		    (smtdc.new GetData(cDLD)).getStartRead() ;
 	    int currentBillMeterReading = 
-		    (smtdc.new GetData(cDLD )).getStartRead() ;
+		    (smtdc.new GetData(cBDLD)).getStartRead() ;
 //	    int currentBillMeterReading = 0 ; // TEMPORARY: DELETE, + UNCOMMENT ABOVE.
 	    Predictor predictor = new Predictor.Builder().
 		    currentBillDate(cBDLD).
@@ -379,6 +379,8 @@ implements ActionListener {
 	    gui.msgEDT("");
 	    gui.msgNoNewlineEDT("Next    Bill Date   : ");
 	    gui.msgEDT(predictor.getDateBillNext());
+	    gui.msgNoNewlineEDT("Days Remaining : ") ;
+	    gui.msgEDT(Long.valueOf(predictor.daysRemaining())) ;
 	    int predictedUsage = predictor.predictUsage() ;
 	    PrintStream where = System.err ;
 	    if ((predictedUsage>=500) && (predictedUsage<=1000)) {
@@ -386,14 +388,14 @@ implements ActionListener {
 	    }
 	    where.print("Predicted   Usage : ") ;
 	    where.println(predictedUsage) ;
-	    gui.msgEDT("") ;
-	    gui.msgEDT(">> "+predictor.getDateBillCurrent().toString()) ;
+//	    gui.msgEDT("") ;
+//	    gui.msgEDT(">> "+predictor.getDateBillCurrent().toString()) ;
 	}
     }
     
     @Override
     public void actionPerformed(ActionEvent ae) {
- 	msg("Action Event " + ae.toString()) ;
+// 	msg("Action Event " + ae.toString()) ;
  	ElectricityUsagePredictor gui = guiAtomicReference.get() ;
  	JDatePickerImpl dPCBD = gui.datePickerCurrentBillDate ;
  	JDatePickerImpl dPCD  = gui.datePickerCurrentDate ;
