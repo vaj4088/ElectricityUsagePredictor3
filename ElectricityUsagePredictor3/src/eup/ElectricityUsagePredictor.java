@@ -48,15 +48,10 @@ implements ActionListener {
     /**
      * 
      */
-    private static final boolean addDebugButton = false;
     private static final boolean disableOutRedirection = false;
     private static final boolean disableErrRedirection = false;
 
     private static final long serialVersionUID = 1L;
-//    private static final String LEFT_OUTLINE_ARROW = "\u21e6";
-//    private static final String UP_OUTLINE_ARROW = "\u21e7";
-//    private static final String RIGHT_OUTLINE_ARROW = "\u21e8";
-//    private static final String DOWN_OUTLINE_ARROW = "\u21e9";
 
     JDatePickerImpl datePickerCurrentBillDate ;
     JDatePickerImpl datePickerCurrentDate     ;
@@ -183,7 +178,7 @@ implements ActionListener {
 	Properties p = new Properties();
 	
 	UtilDateModel modelCurrentBillDate = new UtilDateModel(
-		Date.from(LocalDate.of(2018, Month.JULY, 16).
+		Date.from(LocalDate.of(2018, Month.JANUARY, 9).
 			atStartOfDay(ZoneId.systemDefault()).toInstant())) ;
 	JDatePanelImpl datePanelCurrentBillDate = 
 		new JDatePanelImpl(modelCurrentBillDate, p);
@@ -216,7 +211,7 @@ implements ActionListener {
 	hbox1.add(datePickerCurrentDate) ;
 	
 	UtilDateModel modelNextBillDate = new UtilDateModel(
-		Date.from(LocalDate.of(2018, Month.AUGUST, 16).
+		Date.from(LocalDate.of(2018, Month.JANUARY, 9).
 			atStartOfDay(ZoneId.systemDefault()).toInstant())) ;
 	JDatePanelImpl datePanelNextBillDate = 
 		new JDatePanelImpl(modelNextBillDate, p);
@@ -242,9 +237,6 @@ implements ActionListener {
 	fb.log("Making visible.", Feedbacker.TO_FILE + 
 		Feedbacker.TO_GUI);
 	setVisible(true);
-//	datePickerCurrentBillDate.addActionListener(this) ;
-//	datePickerCurrentDate.    addActionListener(this) ;
-//	datePickerNextBillDate.   addActionListener(this) ;
 	jb.                       addActionListener(this) ;
     } 
 
@@ -253,25 +245,8 @@ implements ActionListener {
      */
     private void connectInternalListeners() {
 	fb.log("GUI controller setup commencing.", Feedbacker.TO_FILE);
-	connectInternalListeners1();
 	fb.log("GUI controller setup completed.", Feedbacker.TO_FILE);
     }
-
-    void connectInternalListeners1() {
-
-	if (addDebugButton) {
-	    JButton debugButton = new JButton("debug");
-	    debugButton.addActionListener(new ActionListener() {
-		@Override
-		public void actionPerformed(ActionEvent e) {
-		    fb.log("=====            END            =====\n",
-			    Feedbacker.TO_OUT);
-		}
-	    });
-	}
-
-    } // end of connectListeners1().
-
 
     @Override
     public String toString() {
@@ -314,14 +289,6 @@ implements ActionListener {
 	    e.printStackTrace();
 	    // Now allow the main thread to exit.
 	}
-//	LocalDate date = LocalDate.of(2018, 8, 1) ;
-//	java.time.format.DateTimeFormatter dTF = 
-//		java.time.format.DateTimeFormatter.ofPattern(
-//	        "MM'%2F'dd'%2F'yyyy") ;
-//	String s = date.format(dTF) ;
-//	s = "The date of 20180801 has been formatted as " + s ;
-//	ElectricityUsagePredictor gui = gui2.get() ; 
-//	gui.msgEDT(s) ;
 	while (true) {
 	    ElectricityUsagePredictor gui = guiAtomicReference.get() ;
 	    gui.cdl = new CountDownLatch(1) ;
@@ -350,7 +317,6 @@ implements ActionListener {
 		    (smtdc.new GetData(cDLD)).getStartRead() ;
 	    int currentBillMeterReading = 
 		    (smtdc.new GetData(cBDLD)).getStartRead() ;
-//	    int currentBillMeterReading = 0 ; // TEMPORARY: DELETE, + UNCOMMENT ABOVE.
 	    Predictor predictor = new Predictor.Builder().
 		    currentBillDate(cBDLD).
 		    currentBillMeterReading(currentBillMeterReading).
@@ -388,14 +354,12 @@ implements ActionListener {
 	    }
 	    where.print("Predicted   Usage : ") ;
 	    where.println(predictedUsage) ;
-//	    gui.msgEDT("") ;
-//	    gui.msgEDT(">> "+predictor.getDateBillCurrent().toString()) ;
+	    gui.msgEDT("") ;
 	}
     }
     
     @Override
     public void actionPerformed(ActionEvent ae) {
-// 	msg("Action Event " + ae.toString()) ;
  	ElectricityUsagePredictor gui = guiAtomicReference.get() ;
  	JDatePickerImpl dPCBD = gui.datePickerCurrentBillDate ;
  	JDatePickerImpl dPCD  = gui.datePickerCurrentDate ;
@@ -498,16 +462,7 @@ implements ActionListener {
     }
     
     class DateLabelFormatter extends AbstractFormatter {
-
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
-	//    private String datePattern = "yyyy-MM-dd";
-	//
-	// Pattern gives: 
-	// day_name month_name day_number_of_month, 4_digit_year_number
-	//
 	private String datePattern = "EEEEEEEEE LLLLLLLLL dd, yyyy";
 	private SimpleDateFormat dateFormatter = 
 		new SimpleDateFormat(datePattern);
@@ -523,10 +478,7 @@ implements ActionListener {
 		Calendar cal = (Calendar) value;
 		return dateFormatter.format(cal.getTime());
 	    }
-
 	    return "";
 	}
     }
 }
-
-

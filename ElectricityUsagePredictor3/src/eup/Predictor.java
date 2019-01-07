@@ -67,11 +67,6 @@ public class Predictor {
 		    getDateBillNext()) ;
 	    long usageDays   = ChronoUnit.DAYS.between(getDateBillCurrent(),
 		    getDateCurrent()) ;
-//	    if (usageDays<=0) {
-//		usageDays   = ChronoUnit.DAYS.between(
-//			(getDateBillCurrent()).minusMonths(1),
-//			    getDateCurrent()) ;
-//	    }
 	    int usage = 
 		    getMeterReadingCurrent() - getMeterReadingBillCurrent() ;
 	    int result = (int)(
@@ -134,5 +129,4 @@ public static class Builder {
     public static void main(String[] args) {
 	/* Intentionally empty until I have something to put here. */
     }
-
 }

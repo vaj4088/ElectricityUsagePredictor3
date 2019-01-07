@@ -59,7 +59,6 @@ public class SmartMeterTexasDataCollector {
     HttpClient client; // Handles the work, holds context
     // (i.e. cookies).
     PostMethod method ;  //  The method (e.g. POST, GET) used for web access.
-//    ExecutorService executor = Executors.newSingleThreadExecutor() ;
     
     String addressSuffix = "" ;
     
@@ -84,9 +83,7 @@ public class SmartMeterTexasDataCollector {
      * from my electrical meter.
      */
     public SmartMeterTexasDataCollector() {
-//	msg("SmartMeterTexasDataCollector construction start.") ;
 	client = new HttpClient();
-//	msg("SmartMeterTexasDataCollector construction end.") ;
 	useProxy(client) ;
     }
 
@@ -172,16 +169,7 @@ public class SmartMeterTexasDataCollector {
     public WebPage getPage(String url, NameValuePair[] postData,
 	    NameValuePair[] removeData) {
 	WebPage wp = null;
-	// Create a method instance.
-//	PostMethod method = new PostMethod(url);
 	method = new PostMethod(url);
-	// Add parameters from the form's hidden input fields.
-//	Iterator<Map.Entry<String, String>> it = hiddenInputFields.entrySet()
-//		.iterator();
-//	while (it.hasNext()) {
-//	    Map.Entry<String, String> entry = it.next();
-//	    method.addParameter(entry.getKey(), entry.getValue());
-//	}
 
 	// This will remove any of the form's hidden input fields that
 	// are being explicitly set.
@@ -651,26 +639,21 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 		try {
 		    result = c.call() ;
 		} catch (Exception e) {
-		    // TODO Auto-generated catch block
 		    e.printStackTrace();
 		}
 	    } else {
 		try {
 		    SwingUtilities.invokeAndWait(dialogTask);
 		} catch (InvocationTargetException e1) {
-		    // TODO Auto-generated catch block
 		    e1.printStackTrace();
 		} catch (InterruptedException e1) {
-		    // TODO Auto-generated catch block
 		    e1.printStackTrace();
 		}
 		try {
 		    result = dialogTask.get().intValue() ;
 		} catch (InterruptedException e) {
-		    // TODO Auto-generated catch block
 		    e.printStackTrace();
 		} catch (ExecutionException e) {
-		    // TODO Auto-generated catch block
 		    e.printStackTrace();
 		}
 	    }
@@ -725,9 +708,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	} // No available no-argument constructor.
 
 	public GetData(LocalDate date) {
-//		msg("GetData construction start.") ;
 	    this.date = date;
-//		msg("GetData construction end.") ;
 	}
 
 	private String extractAddressFromLogin(WebPage wp) {
@@ -782,7 +763,6 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    if (!s.startsWith(SLASH)) {
 		s = SLASH + s ;
 	    }
-//	    msg("New suffix from Get Data: " + s + " .");
 	    return s;
 	}
 
@@ -797,14 +777,6 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 
 	WebPage login() {
 	    List<NameValuePair> nameValuePairs = new ArrayList<>();
-
-	    //
-	    // <><><><><>  Get a web page  <><><><><><>
-	    //
-	    //
-	    //  <><><><><>  This web page is for debugging.  <><><><><><>
-	    //
-//	    getPage("https://www.ubuntu.com/debug/login_start");
 
 	    //
 	    // <><><><><>  Get a web page  <><><><><><>
@@ -853,14 +825,6 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	     * 
 	     */
 
-	    //
-	    // <><><><><>  Get a web page  <><><><><><>
-	    //
-	    //
-	    //  <><><><><>  This web page is for debugging.  <><><><><><>
-	    //
-//	    getPage("https://www.ubuntu.com/debug/login_end");
-	    
 	    return wp ;
 	}
 
@@ -869,63 +833,9 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    final String VIEWUSAGE = "viewUsage_" ; 	// The capital "U" is 
 	    						// significant !
 
-	    /*
-	     * from 00 - WebScarab 20180808 myexpressenergy_com Get Data
-	     * 
-	     * Uses these messages: 164 POST- address from ? Response contains
-	     * some data. Page data is
-	     * _bowStEvent=Usage%2Fportlet%2FUsageCustomerMetersPortlet%
-	     * 21fireEvent%
-	     * 3AForm%3AViewUsagePage_SaveDataSubmitEvent&tag_UserLocale=en&
-	     * reportType=DAILY&viewUsage_startDate=08%2F06%2F2018&
-	     * viewUsage_endDate =08%2F06%2F2018&
-	     * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e
-	     * =&
-	     * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e1
-	     * =&
-	     * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2
-	     * =&
-	     * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2=
-	     * 170 POST Response contains the data! Page Data is
-	     * _bowStEvent=Usage%2Fportlet%2FUsageCustomerMetersPortlet%
-	     * 21fireEvent%
-	     * 3AForm%3AViewUsagePage_SaveDataSubmitEvent&tag_UserLocale=en&
-	     * reportType=DAILY&viewUsage_startDate=08%2F01%2F2018&
-	     * viewUsage_endDate
-	     * =08%2F03%2F2018&viewusage_but_updaterpt=Update+Report&
-	     * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e
-	     * =&
-	     * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e1
-	     * =&
-	     * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2
-	     * =&
-	     * _bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515ResidentialC_00515Default_00515Default_00515Default_00515Esiid_005151651b3535a4_00515b6e7e2=
-	     * 
-	     */
-/*
- * _bowStEvent=Usage%2Fportlet%2FUsageCustomerMetersPortlet%21fireEvent%3AForm%3AViewUsagePage_SaveDataSubmitEvent&tag_UserLocale=en&reportType=INTERVAL&viewUsage_startDate=10%2F12%2F2018&viewUsage_endDate=10%2F12%2F2018&viewusage_but_updaterpt=Update+Report&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515NRCAdmin_00515Default_00515Default_00515Default_00515Esiid_0051516674c265d7_00515bf4cc=&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515NRCAdmin_00515Default_00515Default_00515Default_00515Esiid_0051516674c265d7_00515bf4cc1=&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515NRCAdmin_00515Default_00515Default_00515Default_00515Esiid_0051516674c265d7_00515bf4cc2=&_bst_locator_Usage_00215portlet_00215UsageCustomerMetersPortlet_00515NRCAdmin_00515Default_00515Default_00515Default_00515Esiid_0051516674c265d7_00515bf4cc2=
- */
-
-	    //
-	    // <><><><><>  Get a web page  <><><><><><>
-	    //
-	    //
-	    //  <><><><><>  This web page is for debugging.  <><><><><><>
-	    //
-//	    getPage("https://www.ubuntu.com/debug/get_Data_Start");
-
-	    //
-	    // Preparing to do POST 164
-	    //
-//	    nameValuePairs.add(new NameValuePair("reportType", "DAILY"));
 	    DateTimeFormatter dtf = 
-//		    DateTimeFormatter.ofPattern("MM'%2F'dd'%2F'yyyy") ;
 		    DateTimeFormatter.ofPattern("MM'/'dd'/'yyyy") ;
 	    String dateString = date.format(dtf) ;
-//	    nameValuePairs.add(
-//		    new NameValuePair("viewUsage_startDate", dateString)) ; // <<<<<<<<<<<< Class DateTimeFormatter "MM'%2F'dd'%2F'yyyy"
-//	    nameValuePairs.add(
-//		    new NameValuePair("viewUsage_endDate"  , dateString)) ; // <<<<<<<<<<<< Class DateTimeFormatter "MM'%2F'dd'%2F'yyyy"
 
 	    ArrayList<NameValuePair> al = Util.makeArrayList(
 		    getSomeFieldsInFirstFormSMT(webPage)) ;
@@ -940,17 +850,6 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    }
 	    nameValuePairs.addAll(al) ;
 	    String pageURL = "https://www.smartmetertexas.com" + addressSuffix ;
-//	    System.out.println("<br>===========================") ;
-//	    System.out.println("Attempting to get data from") ;
-//	    System.out.println(pageURL) ;
-//	    System.out.println("using the following parameters") ;
-//	    Iterator<NameValuePair> it = nameValuePairs.iterator() ;
-//	    while (it.hasNext()) {
-//		msg(it.next());
-//	    }
-//	    System.out.println("<br>===========================") ;
-//	    System.out.println("<br>===========================") ;
-//	    System.out.println("Adding the cookie:") ;
 	    //
 	    // Get the client's current state.
 	    //
@@ -983,13 +882,6 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    //  Update the client's state.
 	    //
 	    client.setState(state) ;
-//	    System.out.println(newCookie) ;
-//	    System.out.println("<br>===========================") ;
-//
-//	    System.out.println("<br>===========================") ;
-//	    System.out.println("<br>===========================") ;
-//	    System.out.println(
-//		    "Adding the request headers (and fixing Content-Length):") ;
 	    method.addRequestHeader("Accept", 
 		    "text/html,application/xhtml+xml,"+
 		    "application/xml;q=0.9,*/*;q=0.8") ;
@@ -999,12 +891,6 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    method.addRequestHeader("Connection", "keep-alive") ;
 	    method.addRequestHeader("Upgrade-Insecure-Requests", "1") ;
 	    method.removeRequestHeader("Content-Length") ;
-//	    System.out.println("     ATTEMPTED to remove Content-Length.") ;
-	    //
-	    // Get the content length.
-	    //
-	    
-//	    System.out.println("     Accumulating new Content-Length.") ;
 	    //
 	    // Initialized to account for the subtraction 
 	    // that will be needed.
@@ -1021,15 +907,6 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    method.addRequestHeader(
 		    "Content-Length", 
 		    Integer.toString(contentLengthAccumulator)) ;
-//	    System.out.println("     Added new Content-Length.") ;
-//	    System.out.println("REQUEST HEADERS1") ;
-//	    for (Header header : method.getRequestHeaders()) {
-//		System.out.println(header) ;
-//	    }
-//	    System.out.println("     Accumulated new Content-Length of ") ;
-//	    System.out.println(Integer.toString(contentLengthAccumulator)) ;
-//	    System.out.println(".     ") ;
-//	    System.out.println("<br>===========================") ;
 	    //
 	    // <><><><><>  Get a web page  <><><><><><>
 	    //
@@ -1097,28 +974,6 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 		/*
 		 * NOW : GET THE DATA !!!
 		 */
-		/*
-		 * Look for
-		 * 
-		 * <SPAN
-		 * name="ViewDailyUsage_RowSet_Row_column7">25407.133</SPAN></
-		 * TD>
-		 * 
-		 * where
-		 * 
-		 * <SPAN name="ViewDailyUsage_RowSet_Row_column7">
-		 * 
-		 * precedes the data, and
-		 * 
-		 * </SPAN></TD>
-		 * 
-		 * follows the data, and the data
-		 * 
-		 * 25407.133
-		 * 
-		 * is truncated to 25407
-		 * 
-		 */
 		WPLocation wpData = wp.indexOf(fromStringStartRead) ;
 		if (displayGetDataPage) {
 		    if (badLocation(wpData)) {
@@ -1132,7 +987,8 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 		    }
 		}
 		if (displayGetDataParameters) {
-			System.out.println("=====     SHOW PARAMETERS.     =====") ;
+			System.out.println(
+				"=====     SHOW PARAMETERS.     =====") ;
 			System.out.println("URL:") ;
 			System.out.println(pageURL) ;
 			System.out.println("NAMEVALUEPAIRS:") ;
@@ -1143,7 +999,8 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 			for (Header h : method.getRequestHeaders()) {
 			    System.out.println(h) ;
 			}
-			System.out.println("=====     SHOWED PARAMETERS.     =====") ;
+			System.out.println(
+				"=====     SHOWED PARAMETERS.     =====") ;
 		}
 		assertGoodLocation(wpData) ;
 		String dataString = wp.subString(wpData, 
@@ -1167,50 +1024,19 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	     */
 	    addressSuffix = extractAddressFromGetData(wp);
 
-	    //
-	    // <><><><><>  Get a web page  <><><><><><>
-	    //
-	    //
-	    //  <><><><><>  This web page is for debugging.  <><><><><><>
-	    //
-//	    getPage("https://www.ubuntu.com/debug/get_Data_End");
-
 	}
 	
 	void logout() {
 
 	    //
-	    // <><><><><>  Get a web page  <><><><><><>
-	    //
-	    //
-	    //  <><><><><>  This web page is for debugging.  <><><><><><>
-	    //
-//	    getPage("https://www.ubuntu.com/debug/logout_start");
-
-	    //
-	    // Conversation 173 GET - sets some cookies.
-	    //
-	    //
-	    // <><><><><>  Get a web page  <><><><><><>
-	    //
-	    //
 	    // This clears some cookies but is otherwise UNNECESSARY.
 	    //
 	    getPage("https://www.smartmetertexas.com:443" + addressSuffix);
-	    //
-	    // Conversation 174 GET - sets some cookies.
-	    //
-	    //
-	    // <><><><><>  Get a web page  <><><><><><>
-	    //
 	    //
 	    // <><><><><>  This web page is REQUIRED.
 	    //
 	    getPage("https://www.smartmetertexas.com:443/pkmslogout?"
 		    + "filename=SMTLogout.html&type=public&lang=en");
-	    //
-	    // Conversation 175 GET - sets some cookies.
-	    //
 	    //
 	    // <><><><><>  Get a web page  <><><><><><>
 	    //
@@ -1218,17 +1044,6 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    //  <><><><><>  This web page may be UNNECESSARY.  <><><><><><>
 	    //
 	    getPage("https://www.smartmetertexas.com:443/CAP/public");
-	    // Response is
-	    // 301 Moved Permanently, which automatically causes 176.
-
-	    //
-	    // <><><><><>  Get a web page  <><><><><><>
-	    //
-	    //
-	    //  <><><><><>  This web page is for debugging.  <><><><><><>
-	    //
-//	    getPage("https://www.ubuntu.com/debug/logout_end");
-
 	}
 
 	public void invoke() {
@@ -1236,53 +1051,6 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    getData(wp);
 	    logout();
 	}
-	
-/*
- * 
-	public void invoke() {
-//	    msg("GetData run about to login() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
-	    Future<WebPage> fLogin = executor.submit(new Callable<WebPage>() {
-		@SuppressWarnings("unused")
-		@Override
-		public WebPage call() throws Exception {
-		    msg("GetData run about to login() #" + 
-			    Integer.toString(ai.getAndIncrement()) + ".") ;
-		    return login() ;
-		}
-	    } ) ;
-//	    WebPage wp = login();
-//	    msg("GetData run about to getData() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
-	    Future<Integer> fGetData = executor.submit(new Callable<Integer>() {
-		@Override
-		public Integer call() throws Exception {
-		    msg("GetData run about to getData() #" + 
-			    Integer.toString(ai.getAndIncrement()) + ".") ;
-		    WebPage wp = fLogin.get();  //  Ensure sequencing.
-		    getData(wp) ;
-		    return Integer.valueOf(1) ;
-		}
-	    } ) ;
-//	    getData(wp);
-//	    msg("GetData run about to logout() #" + Integer.toString(ai.getAndIncrement()) + ".") ;
-	    Future<Integer> fLogout = executor.submit(new Callable<Integer>() {
-		@SuppressWarnings("unused")
-		@Override
-		public Integer call() throws Exception {
-		    //
-		    // The following line removes an IDE warning.
-		    //
-		    Integer throwaway = fGetData.get() ;  //  Ensure sequencing.
-		    msg("GetData run about to logout() #" + 
-			    Integer.toString(ai.getAndIncrement()) + ".") ;
-		    logout() ;
-		    return Integer.valueOf(1) ;
-		}
-	    } ) ;
-//	    logout();
-	    fLogout.isDone() ;  //  Removes an IDE warning.
-	}
-	*
-	*/
 
 	/**
 	 * @return the date
@@ -1302,9 +1070,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 		dv = dataValid ;
 	    }
 	    if (!dv) {
-//		msg("getStartRead about to start().") ;
 		invoke() ;
-//		msg("getStartRead after start().") ;
 		value = startRead ;
 	    }
 	    return value;
