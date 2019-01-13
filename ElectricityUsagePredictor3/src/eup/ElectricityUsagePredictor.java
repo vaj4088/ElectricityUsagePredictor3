@@ -194,7 +194,7 @@ implements ActionListener {
 	hbox1.add(datePickerCurrentBillDate) ;
 	
 	UtilDateModel modelCurrentDate = new UtilDateModel(
-		Date.from(LocalDate.now().minusDays(1).
+		Date.from(LocalDate.now().
 			atStartOfDay(ZoneId.systemDefault()).toInstant())) ;
 	JDatePanelImpl datePanelCurrentDate = 
 		new JDatePanelImpl(modelCurrentDate, p);
@@ -214,7 +214,7 @@ implements ActionListener {
 	hbox1.add(datePickerCurrentDate) ;
 	
 	UtilDateModel modelNextBillDate = new UtilDateModel(
-		Date.from(LocalDate.of(2019, Month.JANUARY, 9).
+		Date.from(LocalDate.of(2019, Month.FEBRUARY, 8).
 			atStartOfDay(ZoneId.systemDefault()).toInstant())) ;
 	JDatePanelImpl datePanelNextBillDate = 
 		new JDatePanelImpl(modelNextBillDate, p);

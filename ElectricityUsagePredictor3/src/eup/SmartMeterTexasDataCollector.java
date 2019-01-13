@@ -695,6 +695,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	private volatile LocalDate date ; 
 	private volatile int startRead ;
 	private volatile int endRead ;
+	private volatile boolean dateChanged = false ;
 	private volatile boolean dataValid = false ;
 	
 	private final Object lock = new Object() ;
@@ -904,7 +905,9 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	     * 
 	     */
 	    synchronized (cacheLock) {
-		if (cachedValuesValid && (date.equals(cachedDate))) {
+		if (cachedValuesValid && 
+			(date.isEqual(cachedDate) || date.isAfter(cachedDate))
+			) {
 		    cachedValuesUsed = true ;
 		    /*
 		     * If we got here, then fake the end reading
@@ -918,11 +921,24 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 			startRead = (int) cachedMeterReading;
 			endRead = startRead ;
 			dataValid = true ;
+			//
+			//
+			//  This next line is a MAJOR design decision
+			//  to change the date of this object to the cached
+			//  date despite this object having been created 
+			//  with a different date.
+			//
+			//
+			date = cachedDate ;
+			//
+			//
+			//
+			dateChanged = true ;
 		    }
-		    dateString = date.minusDays(1).format(dtf) ;
-		} else {
-		    dateString = date.format(dtf) ;
 		}
+	    }
+	    synchronized (lock) {
+		dateString = date.format(dtf) ;
 	    }
 	    
 	    List<NameValuePair> nameValuePairs = new ArrayList<>();
@@ -1024,7 +1040,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 			    + Feedbacker.FLUSH) ;
 		}
 		try {
-		    Thread.sleep(5000) ;
+		    Thread.sleep(10000) ;
 		} catch (InterruptedException e) {
 		    e.printStackTrace();
 		    // Restore the interrupted status
@@ -1053,7 +1069,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 			    + Feedbacker.FLUSH) ;
 		}
 		try {
-		    Thread.sleep(5000) ;
+		    Thread.sleep(10000) ;
 		} catch (InterruptedException e) {
 		    e.printStackTrace();
 		    // Restore the interrupted status
@@ -1196,6 +1212,20 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 		value = endRead ;
 	    }
 	    return value;
+	}
+
+	/**
+	 * @return the dateChanged
+	 */
+	public boolean isDateChanged() {
+	    return dateChanged;
+	}
+
+	/**
+	 * @param dateChanged the dateChanged to set
+	 */
+	public void setDateChanged(boolean dateChanged) {
+	    this.dateChanged = dateChanged;
 	}
     }
 }
