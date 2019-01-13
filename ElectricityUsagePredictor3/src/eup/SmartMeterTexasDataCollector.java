@@ -49,6 +49,21 @@ import javax.swing.SwingUtilities;
  */
 
 public class SmartMeterTexasDataCollector {
+    	    
+    //
+    // The following are:
+    // volatile due to potential access from multiple threads, and
+    // static so that values are maintained throughout the
+    //        lifetime of this class.
+    //
+    static volatile LocalDate cachedDate ;
+    static volatile long cachedMeterReading ;
+    static volatile boolean cachedValuesValid = false ;
+    static volatile boolean cachedValuesUsed  = false ;
+    final Object cacheLock = new Object() ;
+    //
+    //
+    //
 
     Feedbacker fb;
 
@@ -801,17 +816,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 		    "https://www.smartmetertexas.com:443/pkmslogin.form",
 		    nameValuePairs, null); // 114 POST- sets some cookies and
 					   // leads to 115 automatically.
-	    /*
-	     * from 00 - WebScarab 20180808 myexpressenergy_com Login
-	     * 
-	     * Uses these messages: 91 GET - may not be needed, but sets some
-	     * cookies. 114 POST- sets some cookies and leads to 115
-	     * automatically. Page data is
-	     * pass_dup=&username=VAJ4088&password=bri2bri&buttonName=&login-
-	     * form-type=pwd Response is 302 Moved Temporarily 115 GET - sets
-	     * some cookies and probably leads to 116 automatically. Response is
-	     * 302 Found 116 GET - sets some cookies.
-	     */
+
 	    addressSuffix = extractAddressFromLogin(wp);
 	    /*
 	     * Need to add getting a web page so that some cookies are set.
@@ -820,22 +825,109 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    //
 	    // <><><><><>  Get a web page  <><><><><><>
 	    //
+	    WebPage wpCache =
 	    getPage("https://www.smartmetertexas.com/texas/wps/myportal") ;
+	    getLatestEndMeterReadingAndUpdateCache(wpCache) ;
 	    /*
+	     * This web page (above) should have 
+	     * the latest end read meter reading.
+	     * 
+	     * Look for this stuff:
+	     * (the date is January 7, 2019)
+	     * 
+           	<TD><SPAN name="ler_td_ler">Latest End of Day Read</SPAN></TD> 
+           	<TD><SPAN name="ler_date">01/07/2019</SPAN></TD> 
+           	<TD><SPAN name="ler_time">00:00:00</SPAN></TD> 
+           	<TD><SPAN name="ler_read">28781.924</SPAN></TD> 
+           	<TD><SPAN name="ler_usage"></SPAN></TD> 
 	     * 
 	     */
-
 	    return wp ;
+	}
+	
+	void getLatestEndMeterReadingAndUpdateCache(WebPage wp) {
+	    WPLocation wpl =
+	    wp.indexOf("Latest End of Day Read") ;
+	    assertGoodLocation(wpl) ;
+	    int line = wpl.getLine() ;
+	    String endDate = wp.subString(
+		    line+1, 
+		    "<TD><SPAN name=\"ler_date\">", 
+		    "</SPAN></TD>"
+		    ) ;
+	    String endValue = wp.subString(
+		    line+3, 
+		    "<TD><SPAN name=\"ler_read\">", 
+		    "</SPAN></TD>"
+		    ) ;
+	    LocalDate startDate = getLatestStartDate(endDate) ;
+	    long startReading = getLatestStartRead(endValue) ;
+	    synchronized(cacheLock) {
+		cachedDate         = startDate ;
+		cachedMeterReading = startReading ;
+		cachedValuesValid = true ;
+	    }
+	}
+	
+	private LocalDate getLatestStartDate(String in) {
+	    if ((in.charAt(2) == '/') && (in.charAt(5) == '/')) {
+		String yearString = in.substring(6, 10) ;
+		String monthString = in.substring(0, 2) ;
+		String dayString = in.substring(3, 5) ;
+		int year  = Integer.parseInt(yearString) ;
+		int month = Integer.parseInt(monthString) ;
+		int day   = Integer.parseInt(dayString) ; 
+		return LocalDate.of(year, month, day).plusDays(1) ;
+	    }
+	    throw new AssertionError(
+	    	"Bad date string in getLatestStartDate."
+	    	) ;
+	}
+	
+	private long getLatestStartRead(String in) {
+	    return (long)Float.parseFloat(in) ;
 	}
 
 	void getData(WebPage webPage) {
+	    DateTimeFormatter dtf = 
+		    DateTimeFormatter.ofPattern("MM'/'dd'/'yyyy") ;
+	    String dateString ;
+	    /*
+	     * Need to compare variable date of type LocalDate
+	     * with variable cachedDate of type LocalDate,
+	     * using cache lock cacheLock to synchronize.
+	     * 
+	     * If boolean variable cachedValuesValid is true
+	     * and the comparison is equal, then
+	     * get the cached meter reading from the long variable
+	     * cachedMeterReading.
+	     * 
+	     */
+	    synchronized (cacheLock) {
+		if (cachedValuesValid && (date.equals(cachedDate))) {
+		    cachedValuesUsed = true ;
+		    /*
+		     * If we got here, then fake the end reading
+		     * (making it the same as the start reading
+		     *  because further data is unavailable)
+		     *  and get data for the previous day
+		     *  (because there are suffixes to be handled
+		     *   so that logging out may be performed).
+		     */
+		    synchronized (lock) {
+			startRead = (int) cachedMeterReading;
+			endRead = startRead ;
+			dataValid = true ;
+		    }
+		    dateString = date.minusDays(1).format(dtf) ;
+		} else {
+		    dateString = date.format(dtf) ;
+		}
+	    }
+	    
 	    List<NameValuePair> nameValuePairs = new ArrayList<>();
 	    final String VIEWUSAGE = "viewUsage_" ; 	// The capital "U" is 
 	    						// significant !
-
-	    DateTimeFormatter dtf = 
-		    DateTimeFormatter.ofPattern("MM'/'dd'/'yyyy") ;
-	    String dateString = date.format(dtf) ;
 
 	    ArrayList<NameValuePair> al = Util.makeArrayList(
 		    getSomeFieldsInFirstFormSMT(webPage)) ;
@@ -934,7 +1026,6 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 		try {
 		    Thread.sleep(5000) ;
 		} catch (InterruptedException e) {
-		    // TODO Auto-generated catch block
 		    e.printStackTrace();
 		    // Restore the interrupted status
 		    Thread.currentThread().interrupt();
@@ -964,7 +1055,6 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 		try {
 		    Thread.sleep(5000) ;
 		} catch (InterruptedException e) {
-		    // TODO Auto-generated catch block
 		    e.printStackTrace();
 		    // Restore the interrupted status
 		    Thread.currentThread().interrupt();
@@ -1013,10 +1103,14 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 			fromStringEndRead, 
 			toStringEndRead) ;
 		float endReadFloat = Float.parseFloat(dataString) ;
-		synchronized(lock) {
-		    startRead = (int) startReadFloat ;
-		    endRead   = (int) endReadFloat ;
-		    dataValid = true ;
+		synchronized (cacheLock) {
+		    if (cachedValuesUsed) {
+			synchronized (lock) {
+			    startRead = (int) startReadFloat;
+			    endRead = (int) endReadFloat;
+			    dataValid = true;
+			}
+		    }
 		}
 	    }
 	    /*

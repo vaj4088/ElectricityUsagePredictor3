@@ -178,7 +178,7 @@ implements ActionListener {
 	Properties p = new Properties();
 	
 	UtilDateModel modelCurrentBillDate = new UtilDateModel(
-		Date.from(LocalDate.of(2018, Month.JANUARY, 9).
+		Date.from(LocalDate.of(2019, Month.JANUARY, 9).
 			atStartOfDay(ZoneId.systemDefault()).toInstant())) ;
 	JDatePanelImpl datePanelCurrentBillDate = 
 		new JDatePanelImpl(modelCurrentBillDate, p);
@@ -194,7 +194,7 @@ implements ActionListener {
 	hbox1.add(datePickerCurrentBillDate) ;
 	
 	UtilDateModel modelCurrentDate = new UtilDateModel(
-		Date.from(LocalDate.now().
+		Date.from(LocalDate.now().minusDays(1).
 			atStartOfDay(ZoneId.systemDefault()).toInstant())) ;
 	JDatePanelImpl datePanelCurrentDate = 
 		new JDatePanelImpl(modelCurrentDate, p);
@@ -208,10 +208,13 @@ implements ActionListener {
 					"Current Date (rarely changed)"),
 				BorderFactory.createEmptyBorder(5, 5, 5, 5)),
 				datePickerCurrentDate.getBorder()));
+//	Box vboxCurrent = Box.createVerticalBox() ;
+//	hbox1.add(vboxCurrent) ;
+//	vboxCurrent.add(new )
 	hbox1.add(datePickerCurrentDate) ;
 	
 	UtilDateModel modelNextBillDate = new UtilDateModel(
-		Date.from(LocalDate.of(2018, Month.JANUARY, 9).
+		Date.from(LocalDate.of(2019, Month.JANUARY, 9).
 			atStartOfDay(ZoneId.systemDefault()).toInstant())) ;
 	JDatePanelImpl datePanelNextBillDate = 
 		new JDatePanelImpl(modelNextBillDate, p);
@@ -293,7 +296,13 @@ implements ActionListener {
 	    ElectricityUsagePredictor gui = guiAtomicReference.get() ;
 	    gui.cdl = new CountDownLatch(1) ;
 	    try {
+		//
+		//  WAIT HERE until the Go button is pushed.
+		//
 		gui.cdl.await() ;
+		//
+		//  CONTINUE because the Go button was pushed.
+		//
 	    } catch (InterruptedException e) {
 		e.printStackTrace();
 		// Restore the interrupted status
