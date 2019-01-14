@@ -32,6 +32,8 @@ import javax.swing.UnsupportedLookAndFeelException;
 import org.jdatepicker.impl.JDatePanelImpl;
 import org.jdatepicker.impl.JDatePickerImpl;
 import org.jdatepicker.impl.UtilDateModel;
+
+import eup.SmartMeterTexasDataCollector.GetData;
 /**
  * The visual environment for the Electricity Usage Predictor. 
  * Construction (instantiation)
@@ -322,14 +324,18 @@ implements ActionListener {
 	    LocalDate cDLD = gui.cD.toInstant().
 		    atZone(ZoneId.systemDefault()).
 		    toLocalDate() ;
+	    GetData gdcDLD = smtdc.new GetData(cDLD) ;
+	    LocalDate currentDateUsed = gdcDLD.getDate() ;
 	    int currentMeterReading     = 
-		    (smtdc.new GetData(cDLD)).getStartRead() ;
+		    gdcDLD.getStartRead() ;
+	    GetData gdcBDLD = smtdc.new GetData(cBDLD) ;
+	    LocalDate currentBillDateUsed = gdcBDLD.getDate() ;
 	    int currentBillMeterReading = 
-		    (smtdc.new GetData(cBDLD)).getStartRead() ;
+		    gdcBDLD.getStartRead() ;
 	    Predictor predictor = new Predictor.Builder().
-		    currentBillDate(cBDLD).
+		    currentBillDate(currentBillDateUsed).
 		    currentBillMeterReading(currentBillMeterReading).
-		    currentDate(cDLD).
+		    currentDate(currentDateUsed).
 		    currentMeterReading(currentMeterReading).
 		    nextBillDate(gui.nBD.toInstant().
 			    atZone(ZoneId.systemDefault()).toLocalDate()).
@@ -341,13 +347,24 @@ implements ActionListener {
 	    //
 	    gui.msgEDT("");
 	    gui.msgNoNewlineEDT("Current Bill Date: ");
-	    gui.msgEDT(predictor.getDateBillCurrent());
+	    gui.msgNoNewlineEDT(predictor.getDateBillCurrent());
+	    if (gdcBDLD.isDateChanged()) {
+		gui.msgEDT("     <<<<<<<<<<<<  CHANGED  >>>>>>>>>>>>") ;
+	    } else {
+		gui.msgEDT(""); 
+	    }
 	    gui.msgNoNewlineEDT("Current Bill Meter Reading: ");
 	    h = new Integer(predictor.getMeterReadingBillCurrent()) ;
 	    gui.msgEDT(h) ;
 	    gui.msgEDT("");
 	    gui.msgNoNewlineEDT("Current      Date   : ");
-	    gui.msgEDT(predictor.getDateCurrent());
+	    gui.msgNoNewlineEDT(predictor.getDateCurrent());
+	    if (gdcDLD.isDateChanged()) {
+		gui.msgEDT("     <<<<<<<<<<<<  LATEST DATA " + 
+	                   "AVAILABLE USED  >>>>>>>>>>>>") ;
+	    } else {
+		gui.msgEDT(""); 
+	    }
 	    gui.msgNoNewlineEDT("Current     Meter Reading : ");
 	    h = new Integer(predictor.getMeterReadingCurrent()) ;
 	    gui.msgEDT(h);

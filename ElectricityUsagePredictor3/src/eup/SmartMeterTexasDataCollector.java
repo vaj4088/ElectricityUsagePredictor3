@@ -60,7 +60,7 @@ public class SmartMeterTexasDataCollector {
     static volatile long cachedMeterReading ;
     static volatile boolean cachedValuesValid = false ;
     static volatile boolean cachedValuesUsed  = false ;
-    final Object cacheLock = new Object() ;
+    final Object cacheLock                    = new Object() ;
     //
     //
     //
@@ -87,6 +87,7 @@ public class SmartMeterTexasDataCollector {
     boolean displayWebPageExtractAddressFromGetData = false ;
     boolean displayGetDataPage = false ;
     boolean displayGetDataParameters = false ;
+    boolean displayUseProxy = false ;
     
 
     static final AtomicInteger ai = new AtomicInteger() ;
@@ -99,7 +100,9 @@ public class SmartMeterTexasDataCollector {
      */
     public SmartMeterTexasDataCollector() {
 	client = new HttpClient();
-	useProxy(client) ;
+	if (displayUseProxy) {
+	    useProxy(client);
+	}
     }
 
     /**
@@ -692,7 +695,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	/*
 	 * Some fields are volatile due to access from multiple threads.
 	 */
-	private volatile LocalDate date ; 
+	private volatile LocalDate date ; // The date of this object.
 	private volatile int startRead ;
 	private volatile int endRead ;
 	private volatile boolean dateChanged = false ;
@@ -905,6 +908,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	     * 
 	     */
 	    synchronized (cacheLock) {
+		cachedValuesUsed  = false ;
 		if (cachedValuesValid && 
 			(date.isEqual(cachedDate) || date.isAfter(cachedDate))
 			) {
@@ -921,6 +925,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 			startRead = (int) cachedMeterReading;
 			endRead = startRead ;
 			dataValid = true ;
+			dateString = date.minusDays(3).format(dtf) ;
 			//
 			//
 			//  This next line is a MAJOR design decision
@@ -935,10 +940,11 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 			//
 			dateChanged = true ;
 		    }
+		} else {
+		    synchronized (lock) {
+			dateString = date.format(dtf) ;
+		    }
 		}
-	    }
-	    synchronized (lock) {
-		dateString = date.format(dtf) ;
 	    }
 	    
 	    List<NameValuePair> nameValuePairs = new ArrayList<>();
@@ -1120,7 +1126,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 			toStringEndRead) ;
 		float endReadFloat = Float.parseFloat(dataString) ;
 		synchronized (cacheLock) {
-		    if (cachedValuesUsed) {
+		    if (!cachedValuesUsed) {
 			synchronized (lock) {
 			    startRead = (int) startReadFloat;
 			    endRead = (int) endReadFloat;
@@ -1218,14 +1224,11 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	 * @return the dateChanged
 	 */
 	public boolean isDateChanged() {
-	    return dateChanged;
-	}
-
-	/**
-	 * @param dateChanged the dateChanged to set
-	 */
-	public void setDateChanged(boolean dateChanged) {
-	    this.dateChanged = dateChanged;
+	    boolean dc ;
+	    synchronized (lock) {
+		dc = dateChanged ;
+	    }
+	    return dc ;
 	}
     }
 }
