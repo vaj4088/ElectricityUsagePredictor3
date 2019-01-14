@@ -39,7 +39,7 @@ public class FeedbackerImplementation implements Feedbacker {
     private static final int PIXELS_WIDTH_LINE = PIXELS_WIDTH_CHAR
 	    * CHARS_IN_LINE;
     private static final int PIXELS_PER_LINE = 15;
-    private static final int LINES_IN_GUI_LOG = 10;
+    private static final int LINES_IN_GUI_LOG = 13;
     private static final int PIXELS_VERTICAL_IN_GUI_LOG = PIXELS_PER_LINE
 	    * LINES_IN_GUI_LOG;
     private static final Dimension DIMENSION_GUI_LOG = new Dimension(
