@@ -341,52 +341,49 @@ implements ActionListener {
 		    nextBillDate(gui.nBD.toInstant().
 			    atZone(ZoneId.systemDefault()).toLocalDate()).
 		    build();
-	    StringBuilder sb = new StringBuilder("\n") ;
+	    StringBuilder sb = new StringBuilder("\r\n") ;
 	    sb.append("Current Bill Date: ") ;
 	    sb.append(predictor.getDateBillCurrent()) ;
 	    if (gdcBDLD.isDateChanged()) {
 		sb.append("     <<<<<<<<<<<<  CHANGED  >>>>>>>>>>>>") ;
 	    }
-	    sb.append("\n") ; 
+	    sb.append("\r\n") ; 
 	    sb.append("Current Bill Meter Reading: ") ;
-
 	    h = new Integer(predictor.getMeterReadingBillCurrent()) ;
 	    sb.append(h.intValue()) ;
-	    sb.append("\n\n") ;
-	    sb.append("Current      Date   : ");
+	    sb.append("\r\n\r\n") ;
+	    sb.append("Current Date: ");
 	    sb.append(predictor.getDateCurrent().toString()) ;
 	    if (gdcDLD.isDateChanged()) {
-		sb.append("     <<<<<<<<<<<<  LATEST DATA " + 
-	                   "AVAILABLE USED  >>>>>>>>>>>>") ;
+		sb.append(" <<<<<<<<<<<< LATEST DATA " + 
+	                   "AVAILABLE USED >>>>>>>>>>>>") ;
 	    }
-	    sb.append("\n") ;
+	    sb.append("\r\n") ;
 	    sb.append("Current     Meter Reading : ");
 	    h = new Integer(predictor.getMeterReadingCurrent()) ;
 	    sb.append(h.intValue()) ;
-	    sb.append("\n") ;
+	    sb.append("\r\n\r\n") ;
 	    sb.append("Next    Bill Date   : ");
 	    sb.append(predictor.getDateBillNext().toString()) ;
-	    sb.append("\n") ;
+	    sb.append("\r\n") ;
 	    sb.append("Days Remaining : ") ;
 	    sb.append(Long.valueOf(predictor.daysRemaining()).toString()) ;
-	    sb.append("\n") ;
+	    sb.append("\r\n") ;
 	    //
 	    //  Above does not require EDT.
 	    //
 	    //
 	    //  Below outputs to gui so should be on EDT.
 	    //
-	    gui.msgEDT(sb) ;
 	    int predictedUsage = predictor.predictUsage() ;
 	    @SuppressWarnings("resource")
-	    PrintStream where = ((predictedUsage>=500) && (predictedUsage<=1000))?System.out:System.err ;
-//	    PrintStream where = System.err ;
-//	    if ((predictedUsage>=500) && (predictedUsage<=1000)) {
-//		where = System.out ;
-//	    }
+	    PrintStream where = 
+	        ((predictedUsage>=500) && (predictedUsage<=1000))?
+	        	System.out:System.err ;
 	    SwingUtilities.invokeLater(new Runnable() {
 	        @Override
 	        public void run() {
+	            System.out.println(sb) ;
 		    where.print("Predicted   Usage : ") ;
 		    where.println(predictedUsage) ;
 	        }
