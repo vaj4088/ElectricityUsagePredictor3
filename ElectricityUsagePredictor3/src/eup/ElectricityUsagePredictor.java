@@ -26,6 +26,7 @@ import javax.swing.JButton;
 import javax.swing.JFormattedTextField.AbstractFormatter;
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
@@ -340,47 +341,56 @@ implements ActionListener {
 		    nextBillDate(gui.nBD.toInstant().
 			    atZone(ZoneId.systemDefault()).toLocalDate()).
 		    build();
+	    StringBuilder sb = new StringBuilder("\n") ;
+	    sb.append("Current Bill Date: ") ;
+	    sb.append(predictor.getDateBillCurrent()) ;
+	    if (gdcBDLD.isDateChanged()) {
+		sb.append("     <<<<<<<<<<<<  CHANGED  >>>>>>>>>>>>") ;
+	    }
+	    sb.append("\n") ; 
+	    sb.append("Current Bill Meter Reading: ") ;
+
+	    h = new Integer(predictor.getMeterReadingBillCurrent()) ;
+	    sb.append(h.intValue()) ;
+	    sb.append("\n\n") ;
+	    sb.append("Current      Date   : ");
+	    sb.append(predictor.getDateCurrent().toString()) ;
+	    if (gdcDLD.isDateChanged()) {
+		sb.append("     <<<<<<<<<<<<  LATEST DATA " + 
+	                   "AVAILABLE USED  >>>>>>>>>>>>") ;
+	    }
+	    sb.append("\n") ;
+	    sb.append("Current     Meter Reading : ");
+	    h = new Integer(predictor.getMeterReadingCurrent()) ;
+	    sb.append(h.intValue()) ;
+	    sb.append("\n") ;
+	    sb.append("Next    Bill Date   : ");
+	    sb.append(predictor.getDateBillNext().toString()) ;
+	    sb.append("\n") ;
+	    sb.append("Days Remaining : ") ;
+	    sb.append(Long.valueOf(predictor.daysRemaining()).toString()) ;
+	    sb.append("\n") ;
 	    //
 	    //  Above does not require EDT.
 	    //
+	    //
 	    //  Below outputs to gui so should be on EDT.
 	    //
-	    gui.msgEDT("");
-	    gui.msgNoNewlineEDT("Current Bill Date: ");
-	    gui.msgNoNewlineEDT(predictor.getDateBillCurrent());
-	    if (gdcBDLD.isDateChanged()) {
-		gui.msgEDT("     <<<<<<<<<<<<  CHANGED  >>>>>>>>>>>>") ;
-	    } else {
-		gui.msgEDT(""); 
-	    }
-	    gui.msgNoNewlineEDT("Current Bill Meter Reading: ");
-	    h = new Integer(predictor.getMeterReadingBillCurrent()) ;
-	    gui.msgEDT(h) ;
-	    gui.msgEDT("");
-	    gui.msgNoNewlineEDT("Current      Date   : ");
-	    gui.msgNoNewlineEDT(predictor.getDateCurrent());
-	    if (gdcDLD.isDateChanged()) {
-		gui.msgEDT("     <<<<<<<<<<<<  LATEST DATA " + 
-	                   "AVAILABLE USED  >>>>>>>>>>>>") ;
-	    } else {
-		gui.msgEDT(""); 
-	    }
-	    gui.msgNoNewlineEDT("Current     Meter Reading : ");
-	    h = new Integer(predictor.getMeterReadingCurrent()) ;
-	    gui.msgEDT(h);
-	    gui.msgEDT("");
-	    gui.msgNoNewlineEDT("Next    Bill Date   : ");
-	    gui.msgEDT(predictor.getDateBillNext());
-	    gui.msgNoNewlineEDT("Days Remaining : ") ;
-	    gui.msgEDT(Long.valueOf(predictor.daysRemaining())) ;
+	    gui.msgEDT(sb) ;
 	    int predictedUsage = predictor.predictUsage() ;
-	    PrintStream where = System.err ;
-	    if ((predictedUsage>=500) && (predictedUsage<=1000)) {
-		where = System.out ;
-	    }
-	    where.print("Predicted   Usage : ") ;
-	    where.println(predictedUsage) ;
-	    gui.msgEDT("") ;
+	    @SuppressWarnings("resource")
+	    PrintStream where = ((predictedUsage>=500) && (predictedUsage<=1000))?System.out:System.err ;
+//	    PrintStream where = System.err ;
+//	    if ((predictedUsage>=500) && (predictedUsage<=1000)) {
+//		where = System.out ;
+//	    }
+	    SwingUtilities.invokeLater(new Runnable() {
+	        @Override
+	        public void run() {
+		    where.print("Predicted   Usage : ") ;
+		    where.println(predictedUsage) ;
+	        }
+	    });
 	}
     }
     
