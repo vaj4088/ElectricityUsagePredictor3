@@ -37,8 +37,8 @@ import javax.swing.SwingUtilities;
  * access the
  * web pages containing the electrical meter data at smartmetertexas.com.
  * Access is via <tt>GET</tt> and <tt>POST</tt> methods accessed by using the
- * HTTP protocol. Cookies are automatically handled by the underlying Apache
- * Commons HttpClient version 3.1 code.
+ * HTTP protocol. Most cookies are automatically handled by the
+ * underlying Apache Commons HttpClient version 3.1 code.
  * <p>
  * 
  * @author Ian Shef
@@ -49,7 +49,36 @@ import javax.swing.SwingUtilities;
  */
 
 public class SmartMeterTexasDataCollector {
-    	    
+    /*
+     * Some fields are volatile due to access from multiple threads.
+     */
+    private volatile LocalDate date ; // The date of this object.
+    private volatile int startRead ;
+    private volatile int endRead ;
+    private volatile boolean dateChanged = false ;
+    private volatile boolean dataValid = false ;
+
+    private final Object lock = new Object() ;
+
+    private static final String msgDown = "No results found.";
+    private static final String msgNoResource = 
+	    "The Access Manager WebSEAL server cannot find the resource " +
+		    "you have requested." ;
+    private static final String fromStringStartRead  = 
+	    "<SPAN name=\"ViewDailyUsage_RowSet_Row_column7\">" ;
+    private static final String toStringStartRead = 
+	    "</SPAN></TD>" ;
+    private static final String fromStringEndRead  = 
+	    "<SPAN name=\"ViewDailyUsage_RowSet_Row_column8\">" ;
+    private static final String toStringEndRead = 
+	    "</SPAN></TD>" ;
+    /*
+     * To find Start of Day Meter Reading, use
+     * 
+     * <SPAN name="ViewDailyUsage_RowSet_Row_column7">
+     * 
+     */
+
     //
     // The following are:
     // volatile due to potential access from multiple threads, and
@@ -74,9 +103,9 @@ public class SmartMeterTexasDataCollector {
     HttpClient client; // Handles the work, holds context
     // (i.e. cookies).
     PostMethod method ;  //  The method (e.g. POST, GET) used for web access.
-    
+
     String addressSuffix = "" ;
-    
+
     // The following can be enabled to provide some debugging
     // information on System.out
     private boolean displayResponseBody = false;
@@ -88,23 +117,32 @@ public class SmartMeterTexasDataCollector {
     boolean displayGetDataPage = false ;
     boolean displayGetDataParameters = false ;
     boolean displayUseProxy = false ;
-    
+
 
     static final AtomicInteger ai = new AtomicInteger() ;
-    
+
     private static final String SLASH = "/" ;
-	
+
     /**
-     * No-argument constructor for getting Smart Meter of Texas  information
-     * from my electrical meter.
+     * No publicly-available no-argument constructor.
      */
-    public SmartMeterTexasDataCollector() {
+    @SuppressWarnings("unused")
+    private SmartMeterTexasDataCollector() {
+    }
+
+    /**
+     * The publicly-available constructor for getting
+     * Smart Meter of Texas information
+     * from my electrical meter.
+     * 
+     */
+    public SmartMeterTexasDataCollector(LocalDate date) {
+	this.date = date;
 	client = new HttpClient();
 	if (displayUseProxy) {
 	    useProxy(client);
 	}
     }
-
     /**
      * Returns the body text of the web page as a <tt>WebPage</tt>, using the
      * html <tt>GET</tt> method.
@@ -396,7 +434,7 @@ public class SmartMeterTexasDataCollector {
      *         desired field found.
      */
     public static List<NameValuePair> 
-    getSomeFieldsInFirstFormSMT(WebPage wpInput) {
+      getSomeFieldsInFirstFormSMT(WebPage wpInput) {
 	final String FORM = "<form " ;
 	final String FORM_END = "</form>" ;
 	final String INPUT = "<input ";
@@ -410,15 +448,15 @@ public class SmartMeterTexasDataCollector {
 	int end   = -1 ; // Assume no  end  of form is found.
 	int current = 0 ;
 	List<NameValuePair> firstFormSomeInputFields = Util.makeArrayList(10) ;
-	
+
 	WebPage wp = new WebPage() ;
-	
+
 	Iterator<String> it = wpInput.getLines().iterator() ;
 	while (it.hasNext()) {
-		//
-		// Convert to lower case and convert 
-	    	// double quotes to single quotes.
-		//
+	    //
+	    // Convert to lower case and convert 
+	    // double quotes to single quotes.
+	    //
 	    String stringOrig = it.next() ;
 	    String s = stringOrig.toLowerCase().replace("\"", "'") ;
 	    wp.appendLine(s);
@@ -441,7 +479,7 @@ public class SmartMeterTexasDataCollector {
 		    int nameEnd   = s.indexOf(CLOSE, nameStart) ;
 		    String name   = stringOrig.substring(nameStart, nameEnd) ;
 		    String value  = "" ;  // Use this if 
-		    			  // there is no value given.
+		    // there is no value given.
 		    int valueStart = s.indexOf(VALUE) ;
 		    if (valueStart >= 0) {
 			valueStart += VALUE.length() ;
@@ -571,7 +609,7 @@ public class SmartMeterTexasDataCollector {
      */
     public static void main(String[] args) {
 	ElectricityUsagePredictor.main(null) ;
-//	System.exit(0);
+	//	System.exit(0);
     }
 
     static InputSource makeWebPageInputSource(WebPage wp) {
@@ -589,7 +627,7 @@ public class SmartMeterTexasDataCollector {
 	 */
 	return new InputSource(sr);
     }
-    
+
     static InputSource makeCharSequenceInputSource(CharSequence cs) {
 	String s = cs.toString() ;
 	return new InputSource(new StringReader(s)) ;
@@ -616,7 +654,7 @@ public class SmartMeterTexasDataCollector {
 	    fb.log(ob, Feedbacker.TO_OUT + Feedbacker.TO_FILE);
 	}
     }
-    
+
     /**
      * A convenience method for displaying a line of text on System.out
      * using the Event Dispatch Thread.
@@ -634,55 +672,55 @@ public class SmartMeterTexasDataCollector {
 	    }
 	}) ;
     }
-	
-	@SuppressWarnings("boxing")
-	private final void useProxy(HttpClient h) {
-	    int result = -1 ;
-/*
-* 
+
+    @SuppressWarnings("boxing")
+    private final void useProxy(HttpClient h) {
+	int result = -1 ;
+	/*
+	 * 
 NOTE: you must make sure you are NOT on the EDT when you call this code, 
 as the get() will never return and the EDT will never be released to go 
 execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
-*
-*/
-	    Callable<Integer> c = new Callable<Integer>() {
-		@Override public Integer call() {
-		    return JOptionPane.showConfirmDialog(null,
-			    "Do you want to use the proxy?") ;
-		}
-	    } ;
-	    FutureTask<Integer> dialogTask = 
-		    new FutureTask<Integer>(c);
-	    if (SwingUtilities.isEventDispatchThread()) {
-		try {
-		    result = c.call() ;
-		} catch (Exception e) {
-		    e.printStackTrace();
-		}
-	    } else {
-		try {
-		    SwingUtilities.invokeAndWait(dialogTask);
-		} catch (InvocationTargetException e1) {
-		    e1.printStackTrace();
-		} catch (InterruptedException e1) {
-		    e1.printStackTrace();
-		}
-		try {
-		    result = dialogTask.get().intValue() ;
-		} catch (InterruptedException e) {
-		    e.printStackTrace();
-		} catch (ExecutionException e) {
-		    e.printStackTrace();
-		}
+	 *
+	 */
+	Callable<Integer> c = new Callable<Integer>() {
+	    @Override public Integer call() {
+		return JOptionPane.showConfirmDialog(null,
+			"Do you want to use the proxy?") ;
 	    }
-	    if (result == JOptionPane.YES_OPTION) {
-		HostConfiguration hostConfiguration = 
-			h.getHostConfiguration() ;
-		hostConfiguration.setProxy("localhost", 8080)  ;
-		h.setHostConfiguration(hostConfiguration) ;
+	} ;
+	FutureTask<Integer> dialogTask = 
+		new FutureTask<Integer>(c);
+	if (SwingUtilities.isEventDispatchThread()) {
+	    try {
+		result = c.call() ;
+	    } catch (Exception e) {
+		e.printStackTrace();
+	    }
+	} else {
+	    try {
+		SwingUtilities.invokeAndWait(dialogTask);
+	    } catch (InvocationTargetException e1) {
+		e1.printStackTrace();
+	    } catch (InterruptedException e1) {
+		e1.printStackTrace();
+	    }
+	    try {
+		result = dialogTask.get().intValue() ;
+	    } catch (InterruptedException e) {
+		e.printStackTrace();
+	    } catch (ExecutionException e) {
+		e.printStackTrace();
 	    }
 	}
-   
+	if (result == JOptionPane.YES_OPTION) {
+	    HostConfiguration hostConfiguration = 
+		    h.getHostConfiguration() ;
+	    hostConfiguration.setProxy("localhost", 8080)  ;
+	    h.setHostConfiguration(hostConfiguration) ;
+	}
+    }
+
     /*
      * javadocs for HttpClient are at
      * http://hc.apache.org/httpcomponents-client-ga/
@@ -691,544 +729,506 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
      * (for some version of the files).
      */
 
-    class GetData {
+
+    private String extractAddressFromLogin(WebPage wp) {
 	/*
-	 * Some fields are volatile due to access from multiple threads.
-	 */
-	private volatile LocalDate date ; // The date of this object.
-	private volatile int startRead ;
-	private volatile int endRead ;
-	private volatile boolean dateChanged = false ;
-	private volatile boolean dataValid = false ;
-	
-	private final Object lock = new Object() ;
-	
-	private static final String msgDown = "No results found.";
-	private static final String msgNoResource = 
-		"The Access Manager WebSEAL server cannot find the resource " +
-		"you have requested." ;
-	private static final String fromStringStartRead  = 
-		"<SPAN name=\"ViewDailyUsage_RowSet_Row_column7\">" ;
-	private static final String toStringStartRead = 
-		"</SPAN></TD>" ;
-	private static final String fromStringEndRead  = 
-		"<SPAN name=\"ViewDailyUsage_RowSet_Row_column8\">" ;
-	private static final String toStringEndRead = 
-		"</SPAN></TD>" ;
-	/*
-	 * To find Start of Day Meter Reading, use
+	 * May also get
 	 * 
-	 * <SPAN name="ViewDailyUsage_RowSet_Row_column7">
-	 * 
+	 * Third-party server not responding.
 	 */
-
-	@SuppressWarnings("unused")
-	private GetData() {
-	} // No available no-argument constructor.
-
-	public GetData(LocalDate date) {
-	    this.date = date;
-	}
-
-	private String extractAddressFromLogin(WebPage wp) {
-	    /*
-	     * May also get
-	     * 
-	     * Third-party server not responding.
-	     */
-	    String startFrom1 = "value='Update Report'";
-	    String startFrom2 = "onclick=\"this.form.action = &quot;";
-	    String goTo = "&quot;;";
-	    if (displayWebPageExtractAddressFromGetData) {
-		StringBuilder sb = new StringBuilder() ;
-		for (String s : wp.getLines()) {
+	String startFrom1 = "value='Update Report'";
+	String startFrom2 = "onclick=\"this.form.action = &quot;";
+	String goTo = "&quot;;";
+	if (displayWebPageExtractAddressFromGetData) {
+	    StringBuilder sb = new StringBuilder() ;
+	    for (String s : wp.getLines()) {
 		sb.append(s) ;
 		sb.append(System.lineSeparator()) ;
-		}
-		msg("Web Page is:") ;
-		msg(sb) ;
 	    }
-	    WPLocation wpl = wp.indexOf(startFrom1);
-	    assertGoodLocation(wpl);
-	    wpl = wp.indexOf(startFrom2, wpl.getLine()) ; // Get to the
-	    						  // correct line.
-	    assertGoodLocation(wpl);
-	    String s = wp.subString(wpl, startFrom2, goTo);
-	    int commentStart = s.indexOf('#') ;
-	    if (commentStart != -1) {
-		s = s.substring(0, commentStart - 1) ;
-	    }
-	    if (!s.startsWith(SLASH)) {
-		s = SLASH + s ;
-	    }
-//	    msg("New suffix from login: " + s + " .");
-	    return s;
+	    msg("Web Page is:") ;
+	    msg(sb) ;
 	}
-
-	private String extractAddressFromGetData(WebPage wp) {
-	    String startFrom1 = "<div id=\"banner_logout\">";
-	    String startFrom2 = "href='";
-	    String startFrom3 = "/";
-	    String goTo = "'";
-	    WPLocation wpl = wp.indexOf(startFrom1);
-	    assertGoodLocation(wpl);
-	    wpl = wp.indexOf(startFrom2, wpl.getLine());
-	    assertGoodLocation(wpl);
-	    wpl = wp.indexOf(startFrom3, wpl.getLine(), wpl.getColumn());
-	    assertGoodLocation(wpl);
-	    WPLocation wpl2 = wp.indexOf(goTo, wpl.getLine(), wpl.getColumn());
-	    assertGoodLocation(wpl2);
-	    String s = wp.subString(wpl, startFrom3, goTo);
-	    if (!s.startsWith(SLASH)) {
-		s = SLASH + s ;
-	    }
-	    return s;
+	WPLocation wpl = wp.indexOf(startFrom1);
+	assertGoodLocation(wpl);
+	wpl = wp.indexOf(startFrom2, wpl.getLine()) ; // Get to the
+	// correct line.
+	assertGoodLocation(wpl);
+	String s = wp.subString(wpl, startFrom2, goTo);
+	int commentStart = s.indexOf('#') ;
+	if (commentStart != -1) {
+	    s = s.substring(0, commentStart - 1) ;
 	}
-
-	private boolean badLocation(WPLocation wpl) {
-	    return (wpl.getColumn() < 0 && wpl.getLine() < 0);
+	if (!s.startsWith(SLASH)) {
+	    s = SLASH + s ;
 	}
+	//	    msg("New suffix from login: " + s + " .");
+	return s;
+    }
 
-	private void assertGoodLocation(WPLocation wpl) {
-	    if (badLocation(wpl))
-		throw new AssertionError("Bad location.");
+    private String extractAddressFromGetData(WebPage wp) {
+	String startFrom1 = "<div id=\"banner_logout\">";
+	String startFrom2 = "href='";
+	String startFrom3 = "/";
+	String goTo = "'";
+	WPLocation wpl = wp.indexOf(startFrom1);
+	assertGoodLocation(wpl);
+	wpl = wp.indexOf(startFrom2, wpl.getLine());
+	assertGoodLocation(wpl);
+	wpl = wp.indexOf(startFrom3, wpl.getLine(), wpl.getColumn());
+	assertGoodLocation(wpl);
+	WPLocation wpl2 = wp.indexOf(goTo, wpl.getLine(), wpl.getColumn());
+	assertGoodLocation(wpl2);
+	String s = wp.subString(wpl, startFrom3, goTo);
+	if (!s.startsWith(SLASH)) {
+	    s = SLASH + s ;
 	}
+	return s;
+    }
 
-	WebPage login() {
-	    List<NameValuePair> nameValuePairs = new ArrayList<>();
+    private boolean badLocation(WPLocation wpl) {
+	return (wpl.getColumn() < 0 && wpl.getLine() < 0);
+    }
 
-	    //
-	    // <><><><><>  Get a web page  <><><><><><>
-	    //
-	    //
-	    //  <><><><><>  This web page may be UNNECESSARY.  <><><><><><>
-	    //
-	    getPage("https://www.smartmetertexas.com:443/CAP/public/"); // 91
+    private void assertGoodLocation(WPLocation wpl) {
+	if (badLocation(wpl))
+	    throw new AssertionError("Bad location.");
+    }
 
-	    nameValuePairs.add(new NameValuePair("pass_dup", ""));
-	    nameValuePairs.add(new NameValuePair("username", "VAJ4088"));
-	    nameValuePairs.add(new NameValuePair("password", "bri2bri"));
-	    nameValuePairs.add(new NameValuePair("buttonName", ""));
-	    nameValuePairs.add(new NameValuePair("login-form-type", "pwd"));
-	    //
-	    // <><><><><>  Get a web page  <><><><><><>
-	    //
-	    //
-	    //  <><><><><>  This web page is REQUIRED.  <><><><><><>
-	    //
-	    WebPage wp = getPage(
-		    "https://www.smartmetertexas.com:443/pkmslogin.form",
-		    nameValuePairs, null); // 114 POST- sets some cookies and
-					   // leads to 115 automatically.
+    WebPage login() {
+	List<NameValuePair> nameValuePairs = new ArrayList<>();
 
-	    addressSuffix = extractAddressFromLogin(wp);
-	    /*
-	     * Need to add getting a web page so that some cookies are set.
-	     * 
-	     */
-	    //
-	    // <><><><><>  Get a web page  <><><><><><>
-	    //
-	    WebPage wpCache =
-	    getPage("https://www.smartmetertexas.com/texas/wps/myportal") ;
-	    getLatestEndMeterReadingAndUpdateCache(wpCache) ;
-	    /*
-	     * This web page (above) should have 
-	     * the latest end read meter reading.
-	     * 
-	     * Look for this stuff:
-	     * (the date is January 7, 2019)
-	     * 
+	//
+	// <><><><><>  Get a web page  <><><><><><>
+	//
+	//
+	//  <><><><><>  This web page may be UNNECESSARY.  <><><><><><>
+	//
+	getPage("https://www.smartmetertexas.com:443/CAP/public/"); // 91
+
+	nameValuePairs.add(new NameValuePair("pass_dup", ""));
+	nameValuePairs.add(new NameValuePair("username", "VAJ4088"));
+	nameValuePairs.add(new NameValuePair("password", "bri2bri"));
+	nameValuePairs.add(new NameValuePair("buttonName", ""));
+	nameValuePairs.add(new NameValuePair("login-form-type", "pwd"));
+	//
+	// <><><><><>  Get a web page  <><><><><><>
+	//
+	//
+	//  <><><><><>  This web page is REQUIRED.  <><><><><><>
+	//
+	WebPage wp = getPage(
+		"https://www.smartmetertexas.com:443/pkmslogin.form",
+		nameValuePairs, null); // 114 POST- sets some cookies and
+	// leads to 115 automatically.
+
+	addressSuffix = extractAddressFromLogin(wp);
+	/*
+	 * Need to add getting a web page so that some cookies are set.
+	 * 
+	 */
+	//
+	// <><><><><>  Get a web page  <><><><><><>
+	//
+	WebPage wpCache =
+		getPage("https://www.smartmetertexas.com/texas/wps/myportal") ;
+	getLatestEndMeterReadingAndUpdateCache(wpCache) ;
+	/*
+	 * This web page (above) should have 
+	 * the latest end read meter reading.
+	 * 
+	 * Look for this stuff:
+	 * (the date is January 7, 2019)
+	 * 
            	<TD><SPAN name="ler_td_ler">Latest End of Day Read</SPAN></TD> 
            	<TD><SPAN name="ler_date">01/07/2019</SPAN></TD> 
            	<TD><SPAN name="ler_time">00:00:00</SPAN></TD> 
            	<TD><SPAN name="ler_read">28781.924</SPAN></TD> 
            	<TD><SPAN name="ler_usage"></SPAN></TD> 
-	     * 
-	     */
-	    return wp ;
-	}
-	
-	void getLatestEndMeterReadingAndUpdateCache(WebPage wp) {
-	    WPLocation wpl =
-	    wp.indexOf("Latest End of Day Read") ;
-	    assertGoodLocation(wpl) ;
-	    int line = wpl.getLine() ;
-	    String endDate = wp.subString(
-		    line+1, 
-		    "<TD><SPAN name=\"ler_date\">", 
-		    "</SPAN></TD>"
-		    ) ;
-	    String endValue = wp.subString(
-		    line+3, 
-		    "<TD><SPAN name=\"ler_read\">", 
-		    "</SPAN></TD>"
-		    ) ;
-	    LocalDate startDate = getLatestStartDate(endDate) ;
-	    long startReading = getLatestStartRead(endValue) ;
-	    synchronized(cacheLock) {
-		cachedDate         = startDate ;
-		cachedMeterReading = startReading ;
-		cachedValuesValid = true ;
-	    }
-	}
-	
-	private LocalDate getLatestStartDate(String dateIn) {
-	    if ((dateIn.charAt(2) == '/') && (dateIn.charAt(5) == '/')) {
-		String yearString = dateIn.substring(6, 10) ;
-		String monthString = dateIn.substring(0, 2) ;
-		String dayString = dateIn.substring(3, 5) ;
-		int year  = Integer.parseInt(yearString) ;
-		int month = Integer.parseInt(monthString) ;
-		int day   = Integer.parseInt(dayString) ; 
-		return LocalDate.of(year, month, day).plusDays(1) ;
-	    }
-	    throw new AssertionError(
-	    	"Bad date string in getLatestStartDate."
-	    	) ;
-	}
-	
-	private long getLatestStartRead(String in) {
-	    return (long)Float.parseFloat(in) ;
-	}
+	 * 
+	 */
+	return wp ;
+    }
 
-	void getData(WebPage webPage) {
-	    DateTimeFormatter dtf = 
-		    DateTimeFormatter.ofPattern("MM'/'dd'/'yyyy") ;
-	    String dateString ;
-	    /*
-	     * Need to compare variable date of type LocalDate
-	     * with variable cachedDate of type LocalDate,
-	     * using cache lock cacheLock to synchronize.
-	     * 
-	     * If boolean variable cachedValuesValid is true
-	     * and the comparison is equal, then
-	     * get the cached meter reading from the long variable
-	     * cachedMeterReading.
-	     * 
-	     */
-	    synchronized (cacheLock) {
-		cachedValuesUsed  = false ;
-		if (cachedValuesValid && 
-			(date.isEqual(cachedDate) || date.isAfter(cachedDate))
-			) {
-		    cachedValuesUsed = true ;
-		    /*
-		     * If we got here, then fake the end reading
-		     * (making it the same as the start reading
-		     *  because further data is unavailable)
-		     *  and get data for the previous day
-		     *  (because there are suffixes to be handled
-		     *   so that logging out may be performed).
-		     */
-		    synchronized (lock) {
-			startRead = (int) cachedMeterReading;
-			endRead = startRead ;
-			dataValid = true ;
-			dateString = date.minusDays(3).format(dtf) ;
-			//
-			//
-			//  This next line is a MAJOR design decision
-			//  to change the date of this object to the cached
-			//  date despite this object having been created 
-			//  with a different date.
-			//
-			//
-			date = cachedDate ;
-			//
-			//
-			//
-			dateChanged = true ;
-		    }
-		} else {
-		    synchronized (lock) {
-			dateString = date.format(dtf) ;
-		    }
-		}
-	    }
-	    
-	    List<NameValuePair> nameValuePairs = new ArrayList<>();
-	    final String VIEWUSAGE = "viewUsage_" ; 	// The capital "U" is 
-	    						// significant !
+    void getLatestEndMeterReadingAndUpdateCache(WebPage wp) {
+	WPLocation wpl =
+		wp.indexOf("Latest End of Day Read") ;
+	assertGoodLocation(wpl) ;
+	int line = wpl.getLine() ;
+	String endDate = wp.subString(
+		line+1, 
+		"<TD><SPAN name=\"ler_date\">", 
+		"</SPAN></TD>"
+		) ;
+	String endValue = wp.subString(
+		line+3, 
+		"<TD><SPAN name=\"ler_read\">", 
+		"</SPAN></TD>"
+		) ;
+	LocalDate startDate = getLatestStartDate(endDate) ;
+	long startReading = getLatestStartRead(endValue) ;
+	synchronized(cacheLock) {
+	    cachedDate         = startDate ;
+	    cachedMeterReading = startReading ;
+	    cachedValuesValid = true ;
+	}
+    }
 
-	    ArrayList<NameValuePair> al = Util.makeArrayList(
-		    getSomeFieldsInFirstFormSMT(webPage)) ;
-	    ListIterator<NameValuePair> lit = al.listIterator() ;
-	    while (lit.hasNext()) {
-		NameValuePair nvp = lit.next() ;
-		String name = nvp.getName() ;
-		if (name.startsWith(VIEWUSAGE)) {
-		    nvp.setValue(dateString);
-		    lit.set(nvp) ;
-		}
-	    }
-	    nameValuePairs.addAll(al) ;
-	    String pageURL = "https://www.smartmetertexas.com" + addressSuffix ;
-	    //
-	    // Get the client's current state.
-	    //
-	    HttpState state = client.getState() ;
-	    //
-	    // Get the client's first cookie (cookie 0).
-	    //
-	    Cookie cookie = state.getCookies()[0] ;
-	    //
-	    // Get the parameters of the cookie so that 
-	    // we know what parameters to use.
-	    //
-	    String domain = cookie.getDomain() ;
-	    String path   = cookie.getPath() ;
-	    Date expires  = cookie.getExpiryDate() ;
-	    boolean secure= cookie.getSecure() ;
-	    //
-	    // Create the new cookie and add it to the collection of cookies.
-	    //
-	    Cookie newCookie = new Cookie(
-		    domain, 
-		    "IV_JCT", 
-		    "%2Ftexas",
-		    path,
-		    expires,
-		    secure
-		    ) ;
-	    state.addCookie(newCookie) ; 
-	    //
-	    //  Update the client's state.
-	    //
-	    client.setState(state) ;
-	    method.addRequestHeader("Accept", 
-		    "text/html,application/xhtml+xml,"+
-		    "application/xml;q=0.9,*/*;q=0.8") ;
-	    method.addRequestHeader("Accept-Language", "en-US,en;q=0.5") ;
-	    method.addRequestHeader("Referer", 
-		    "https://www.smartmetertexas.com/texas/wps/myportal") ;
-	    method.addRequestHeader("Connection", "keep-alive") ;
-	    method.addRequestHeader("Upgrade-Insecure-Requests", "1") ;
-	    method.removeRequestHeader("Content-Length") ;
-	    //
-	    // Initialized to account for the subtraction 
-	    // that will be needed.
-	    //
-	    int contentLengthAccumulator = -1 ;
-	    for (NameValuePair nvp : nameValuePairs) {
-		contentLengthAccumulator += nvp.getName().length() ;
-		contentLengthAccumulator += nvp.getValue().length() ;
-		contentLengthAccumulator += 2 ;  // For '&' and ';'
-	    }
-	    if (contentLengthAccumulator == -1) {
-		contentLengthAccumulator = 0 ;  // No length to body.
-	    }
-	    method.addRequestHeader(
-		    "Content-Length", 
-		    Integer.toString(contentLengthAccumulator)) ;
-	    //
-	    // <><><><><>  Get a web page  <><><><><><>
-	    //
-	    WebPage wp = getPage(
-		    pageURL,nameValuePairs, null);
-	    //
-	    // Check that there really is data.
-	    //
-	    
-	    //
-	    // First, check that the data was properly accessed.
-	    //
-	    WPLocation resourceMissing = wp.indexOf(msgNoResource) ;
-	    if (!badLocation(resourceMissing)) {
-		StringBuilder sb = new StringBuilder("Resource is missing, "
-			+ "fix the program and please try again later.") ;
-		if (null == fb) {
-		    System.out.println(sb);
-		} else {
-		    fb.log(sb,
-			    Feedbacker.TO_FILE + Feedbacker.TO_GUI + 
-			    Feedbacker.TO_OUT
-			    + Feedbacker.FLUSH) ;
-		}
-		try {
-		    Thread.sleep(10000) ;
-		} catch (InterruptedException e) {
-		    e.printStackTrace();
-		    // Restore the interrupted status
-		    Thread.currentThread().interrupt();
-		}
-		System.exit(-26) ;
-	    }
-	    
-	    //
-	    // Second, check that the server is up.
-	    //
-	    WPLocation serverDown = wp.indexOf(msgDown);
-	    if (!badLocation(serverDown)) {
-		synchronized(lock) {
-		    dataValid = false ;
-		}
-		StringBuilder sb = new StringBuilder(
-			"No predicting is possible now, "
-				+ "please try again later.") ;
-		if (null == fb) {
-		    System.out.println(sb);
-		} else {
-		    fb.log(sb,
-			    Feedbacker.TO_FILE + Feedbacker.TO_GUI + 
-			    Feedbacker.TO_OUT
-			    + Feedbacker.FLUSH) ;
-		}
-		try {
-		    Thread.sleep(10000) ;
-		} catch (InterruptedException e) {
-		    e.printStackTrace();
-		    // Restore the interrupted status
-		    Thread.currentThread().interrupt();
-		}
-		System.exit(-27) ;
-	    } else {
+    private LocalDate getLatestStartDate(String dateIn) {
+	final char FSLASH = '/' ;
+	if ((dateIn.charAt(2) == FSLASH) && (dateIn.charAt(5) == FSLASH)) {
+	    String yearString = dateIn.substring(6, 10) ;
+	    String monthString = dateIn.substring(0, 2) ;
+	    String dayString = dateIn.substring(3, 5) ;
+	    int year  = Integer.parseInt(yearString) ;
+	    int month = Integer.parseInt(monthString) ;
+	    int day   = Integer.parseInt(dayString) ; 
+	    return LocalDate.of(year, month, day).plusDays(1) ;
+	}
+	throw new AssertionError(
+		"Bad date string in getLatestStartDate."
+		) ;
+    }
+
+    private long getLatestStartRead(String in) {
+	return (long)Float.parseFloat(in) ;
+    }
+
+    void getData(WebPage webPage) {
+	DateTimeFormatter dtf = 
+		DateTimeFormatter.ofPattern("MM'/'dd'/'yyyy") ;
+	String dateString ;
+	/*
+	 * Need to compare variable date of type LocalDate
+	 * with variable cachedDate of type LocalDate,
+	 * using cache lock cacheLock to synchronize.
+	 * 
+	 * If boolean variable cachedValuesValid is true
+	 * and the comparison is equal, then
+	 * get the cached meter reading from the long variable
+	 * cachedMeterReading.
+	 * 
+	 */
+	synchronized (cacheLock) {
+	    cachedValuesUsed  = false ;
+	    if (cachedValuesValid && 
+		    (date.isEqual(cachedDate) || date.isAfter(cachedDate))
+		    ) {
+		cachedValuesUsed = true ;
 		/*
-		 * NOW : GET THE DATA !!!
+		 * If we got here, then fake the end reading
+		 * (making it the same as the start reading
+		 *  because further data is unavailable)
+		 *  and get data for the previous day
+		 *  (because there are suffixes to be handled
+		 *   so that logging out may be performed).
 		 */
-		WPLocation wpData = wp.indexOf(fromStringStartRead) ;
-		if (displayGetDataPage) {
-		    if (badLocation(wpData)) {
-			StringBuilder sb = new StringBuilder() ;
-			for (String line : wp.getLines()) {
-			    sb.append(line) ;
-			}
-			System.out.println("=====     SHOW PAGE.     =====") ;
-			System.out.println(sb) ;
-			System.out.println("=====     SHOWED PAGE.     =====") ;
-		    }
+		synchronized (lock) {
+		    startRead = (int) cachedMeterReading;
+		    endRead = startRead ;
+		    dataValid = true ;
+		    dateString = date.minusDays(3).format(dtf) ;
+		    //
+		    //
+		    //  This next line is a MAJOR design decision
+		    //  to change the date of this object to the cached
+		    //  date despite this object having been created 
+		    //  with a different date.
+		    //
+		    //
+		    date = cachedDate ;
+		    //
+		    //
+		    //
+		    dateChanged = true ;
 		}
-		if (displayGetDataParameters) {
-			System.out.println(
-				"=====     SHOW PARAMETERS.     =====") ;
-			System.out.println("URL:") ;
-			System.out.println(pageURL) ;
-			System.out.println("NAMEVALUEPAIRS:") ;
-			for (NameValuePair nvp : nameValuePairs) {
-			    System.out.println(nvp) ;
-			}
-			System.out.println("REQUEST HEADERS2:") ;
-			for (Header h : method.getRequestHeaders()) {
-			    System.out.println(h) ;
-			}
-			System.out.println(
-				"=====     SHOWED PARAMETERS.     =====") ;
-		}
-		assertGoodLocation(wpData) ;
-		String dataString = wp.subString(wpData, 
-			fromStringStartRead, 
-			toStringStartRead) ;
-		float startReadFloat = Float.parseFloat(dataString) ;
-
-		wpData = wp.indexOf(fromStringEndRead) ;
-		dataString = wp.subString(wpData, 
-			fromStringEndRead, 
-			toStringEndRead) ;
-		float endReadFloat = Float.parseFloat(dataString) ;
-		synchronized (cacheLock) {
-		    if (!cachedValuesUsed) {
-			synchronized (lock) {
-			    startRead = (int) startReadFloat;
-			    endRead = (int) endReadFloat;
-			    dataValid = true;
-			}
-		    }
+	    } else {
+		synchronized (lock) {
+		    dateString = date.format(dtf) ;
 		}
 	    }
+	}
+
+	List<NameValuePair> nameValuePairs = new ArrayList<>();
+	final String VIEWUSAGE = "viewUsage_" ; 	// The capital "U" is 
+	// significant !
+
+	ArrayList<NameValuePair> al = Util.makeArrayList(
+		getSomeFieldsInFirstFormSMT(webPage)) ;
+	ListIterator<NameValuePair> lit = al.listIterator() ;
+	while (lit.hasNext()) {
+	    NameValuePair nvp = lit.next() ;
+	    String name = nvp.getName() ;
+	    if (name.startsWith(VIEWUSAGE)) {
+		nvp.setValue(dateString);
+		lit.set(nvp) ;
+	    }
+	}
+	nameValuePairs.addAll(al) ;
+	String pageURL = "https://www.smartmetertexas.com" + addressSuffix ;
+	//
+	// Get the client's current state.
+	//
+	HttpState state = client.getState() ;
+	//
+	// Get the client's first cookie (cookie 0).
+	//
+	Cookie cookie = state.getCookies()[0] ;
+	//
+	// Get the parameters of the cookie so that 
+	// we know what parameters to use.
+	//
+	String domain = cookie.getDomain() ;
+	String path   = cookie.getPath() ;
+	Date expires  = cookie.getExpiryDate() ;
+	boolean secure= cookie.getSecure() ;
+	//
+	// Create the new cookie and add it to the collection of cookies.
+	//
+	Cookie newCookie = new Cookie(
+		domain, 
+		"IV_JCT", 
+		"%2Ftexas",
+		path,
+		expires,
+		secure
+		) ;
+	state.addCookie(newCookie) ; 
+	//
+	//  Update the client's state.
+	//
+	client.setState(state) ;
+	method.addRequestHeader("Accept", 
+		"text/html,application/xhtml+xml,"+
+		"application/xml;q=0.9,*/*;q=0.8") ;
+	method.addRequestHeader("Accept-Language", "en-US,en;q=0.5") ;
+	method.addRequestHeader("Referer", 
+		"https://www.smartmetertexas.com/texas/wps/myportal") ;
+	method.addRequestHeader("Connection", "keep-alive") ;
+	method.addRequestHeader("Upgrade-Insecure-Requests", "1") ;
+	method.removeRequestHeader("Content-Length") ;
+	//
+	// Initialized to account for the subtraction 
+	// that will be needed.
+	//
+	int contentLengthAccumulator = -1 ;
+	for (NameValuePair nvp : nameValuePairs) {
+	    contentLengthAccumulator += nvp.getName().length() ;
+	    contentLengthAccumulator += nvp.getValue().length() ;
+	    contentLengthAccumulator += 2 ;  // For '&' and ';'
+	}
+	if (contentLengthAccumulator == -1) {
+	    contentLengthAccumulator = 0 ;  // No length to body.
+	}
+	method.addRequestHeader(
+		"Content-Length", 
+		Integer.toString(contentLengthAccumulator)) ;
+	//
+	// <><><><><>  Get a web page  <><><><><><>
+	//
+	WebPage wp = getPage(
+		pageURL,nameValuePairs, null);
+	//
+	// Check that there really is data.
+	//
+
+	//
+	// First, check that the data was properly accessed.
+	//
+	WPLocation resourceMissing = wp.indexOf(msgNoResource) ;
+	if (!badLocation(resourceMissing)) {
+	    StringBuilder sb = new StringBuilder("Resource is missing, "
+		    + "fix the program and please try again later.") ;
+	    if (null == fb) {
+		System.out.println(sb);
+	    } else {
+		fb.log(sb,
+			Feedbacker.TO_FILE + Feedbacker.TO_GUI + 
+			Feedbacker.TO_OUT
+			+ Feedbacker.FLUSH) ;
+	    }
+	    try {
+		Thread.sleep(10000) ;
+	    } catch (InterruptedException e) {
+		e.printStackTrace();
+		// Restore the interrupted status
+		Thread.currentThread().interrupt();
+	    }
+	    System.exit(-26) ;
+	}
+
+	//
+	// Second, check that the server is up.
+	//
+	WPLocation serverDown = wp.indexOf(msgDown);
+	if (!badLocation(serverDown)) {
+	    synchronized(lock) {
+		dataValid = false ;
+	    }
+	    StringBuilder sb = new StringBuilder(
+		    "No predicting is possible now, "
+			    + "please try again later.") ;
+	    if (null == fb) {
+		System.out.println(sb);
+	    } else {
+		fb.log(sb,
+			Feedbacker.TO_FILE + Feedbacker.TO_GUI + 
+			Feedbacker.TO_OUT
+			+ Feedbacker.FLUSH) ;
+	    }
+	    try {
+		Thread.sleep(10000) ;
+	    } catch (InterruptedException e) {
+		e.printStackTrace();
+		// Restore the interrupted status
+		Thread.currentThread().interrupt();
+	    }
+	    System.exit(-27) ;
+	} else {
 	    /*
-	     * NOW : GET THE NEW addressSuffix !!!
+	     * NOW : GET THE DATA !!!
 	     */
-	    addressSuffix = extractAddressFromGetData(wp);
+	    WPLocation wpData = wp.indexOf(fromStringStartRead) ;
+	    if (displayGetDataPage) {
+		if (badLocation(wpData)) {
+		    StringBuilder sb = new StringBuilder() ;
+		    for (String line : wp.getLines()) {
+			sb.append(line) ;
+		    }
+		    System.out.println("=====     SHOW PAGE.     =====") ;
+		    System.out.println(sb) ;
+		    System.out.println("=====     SHOWED PAGE.     =====") ;
+		}
+	    }
+	    if (displayGetDataParameters) {
+		System.out.println(
+			"=====     SHOW PARAMETERS.     =====") ;
+		System.out.println("URL:") ;
+		System.out.println(pageURL) ;
+		System.out.println("NAMEVALUEPAIRS:") ;
+		for (NameValuePair nvp : nameValuePairs) {
+		    System.out.println(nvp) ;
+		}
+		System.out.println("REQUEST HEADERS2:") ;
+		for (Header h : method.getRequestHeaders()) {
+		    System.out.println(h) ;
+		}
+		System.out.println(
+			"=====     SHOWED PARAMETERS.     =====") ;
+	    }
+	    assertGoodLocation(wpData) ;
+	    String dataString = wp.subString(wpData, 
+		    fromStringStartRead, 
+		    toStringStartRead) ;
+	    float startReadFloat = Float.parseFloat(dataString) ;
 
+	    wpData = wp.indexOf(fromStringEndRead) ;
+	    dataString = wp.subString(wpData, 
+		    fromStringEndRead, 
+		    toStringEndRead) ;
+	    float endReadFloat = Float.parseFloat(dataString) ;
+	    synchronized (cacheLock) {
+		if (!cachedValuesUsed) {
+		    synchronized (lock) {
+			startRead = (int) startReadFloat;
+			endRead = (int) endReadFloat;
+			dataValid = true;
+		    }
+		}
+	    }
 	}
-	
-	void logout() {
-
-	    //
-	    // This clears some cookies but is otherwise UNNECESSARY.
-	    //
-	    getPage("https://www.smartmetertexas.com:443" + addressSuffix);
-	    //
-	    // <><><><><>  This web page is REQUIRED.
-	    //
-	    getPage("https://www.smartmetertexas.com:443/pkmslogout?"
-		    + "filename=SMTLogout.html&type=public&lang=en");
-	    //
-	    // <><><><><>  Get a web page  <><><><><><>
-	    //
-	    //
-	    //  <><><><><>  This web page may be UNNECESSARY.  <><><><><><>
-	    //
-	    getPage("https://www.smartmetertexas.com:443/CAP/public");
-	}
-
-	public void invoke() {
-	    WebPage wp = login();
-	    getData(wp);
-	    logout();
-	}
-
-	/**
-	 * @return the date
+	/*
+	 * NOW : GET THE NEW addressSuffix !!!
 	 */
-	public LocalDate getDate() {
-	    return date;
-	}
+	addressSuffix = extractAddressFromGetData(wp);
 
-	/**
-	 * @return the startRead
-	 */
-	public int getStartRead() {
-	    int value ;
-	    boolean dv ;
-	    synchronized(lock) {
-		value = startRead ;
-		dv = dataValid ;
-	    }
-	    if (!dv) {
-		invoke() ;
-		value = startRead ;
-	    }
-	    return value;
-	}
+    }
 
-	/**
-	 * @return whether the data is valid
-	 */
-	public boolean isDataValid() {
-	    boolean value ;
-	    synchronized(lock) {
-		value = dataValid ;
-	    }
-	    return value;
-	}
+    void logout() {
 
-	/**
-	 * @return the endRead
-	 */
-	public int getEndRead() {
-	    int value ;
-	    boolean dv ;
-	    synchronized(lock) {
-		value = endRead ;
-		dv = dataValid ;
-	    }
-	    if (!dv) {
-		invoke() ;  
-		value = endRead ;
-	    }
-	    return value;
-	}
+	//
+	// This clears some cookies but is otherwise UNNECESSARY.
+	//
+	getPage("https://www.smartmetertexas.com:443" + addressSuffix);
+	//
+	// <><><><><>  This web page is REQUIRED.
+	//
+	getPage("https://www.smartmetertexas.com:443/pkmslogout?"
+		+ "filename=SMTLogout.html&type=public&lang=en");
+	//
+	// <><><><><>  Get a web page  <><><><><><>
+	//
+	//
+	//  <><><><><>  This web page may be UNNECESSARY.  <><><><><><>
+	//
+	getPage("https://www.smartmetertexas.com:443/CAP/public");
+    }
 
-	/**
-	 * @return the dateChanged
-	 */
-	public boolean isDateChanged() {
-	    boolean dc ;
-	    synchronized (lock) {
-		dc = dateChanged ;
-	    }
-	    return dc ;
+    public void invoke() {
+	WebPage wp = login();
+	getData(wp);
+	logout();
+    }
+
+    /**
+     * @return the date
+     */
+    public LocalDate getDate() {
+	return date;
+    }
+
+    /**
+     * @return the startRead
+     */
+    public int getStartRead() {
+	int value ;
+	boolean dv ;
+	synchronized(lock) {
+	    value = startRead ;
+	    dv = dataValid ;
 	}
+	if (!dv) {
+	    invoke() ;
+	    value = startRead ;
+	}
+	return value;
+    }
+
+    /**
+     * @return whether the data is valid
+     */
+    public boolean isDataValid() {
+	boolean value ;
+	synchronized(lock) {
+	    value = dataValid ;
+	}
+	return value;
+    }
+
+    /**
+     * @return the endRead
+     */
+    public int getEndRead() {
+	int value ;
+	boolean dv ;
+	synchronized(lock) {
+	    value = endRead ;
+	    dv = dataValid ;
+	}
+	if (!dv) {
+	    invoke() ;  
+	    value = endRead ;
+	}
+	return value;
+    }
+
+    /**
+     * @return the dateChanged
+     */
+    public boolean isDateChanged() {
+	boolean dc ;
+	synchronized (lock) {
+	    dc = dateChanged ;
+	}
+	return dc ;
     }
 }

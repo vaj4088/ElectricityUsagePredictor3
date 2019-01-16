@@ -33,8 +33,6 @@ import javax.swing.UnsupportedLookAndFeelException;
 import org.jdatepicker.impl.JDatePanelImpl;
 import org.jdatepicker.impl.JDatePickerImpl;
 import org.jdatepicker.impl.UtilDateModel;
-
-import eup.SmartMeterTexasDataCollector.GetData;
 /**
  * The visual environment for the Electricity Usage Predictor. 
  * Construction (instantiation)
@@ -311,8 +309,6 @@ implements ActionListener {
 		// Restore the interrupted status
 		Thread.currentThread().interrupt();
 	    }
-	    SmartMeterTexasDataCollector smtdc = 
-		    new SmartMeterTexasDataCollector() ;
 	    //
 	    // cBDLD is current current Bill Date as a Local Date
 	    //
@@ -325,11 +321,13 @@ implements ActionListener {
 	    LocalDate cDLD = gui.cD.toInstant().
 		    atZone(ZoneId.systemDefault()).
 		    toLocalDate() ;
-	    GetData gdcDLD = smtdc.new GetData(cDLD) ;
+	    SmartMeterTexasDataCollector gdcDLD = 
+		    new SmartMeterTexasDataCollector(cDLD) ;
 	    LocalDate currentDateUsed = gdcDLD.getDate() ;
 	    int currentMeterReading     = 
 		    gdcDLD.getStartRead() ;
-	    GetData gdcBDLD = smtdc.new GetData(cBDLD) ;
+	    SmartMeterTexasDataCollector gdcBDLD = 
+		    new SmartMeterTexasDataCollector(cBDLD) ;
 	    LocalDate currentBillDateUsed = gdcBDLD.getDate() ;
 	    int currentBillMeterReading = 
 		    gdcBDLD.getStartRead() ;
