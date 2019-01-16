@@ -873,11 +873,11 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    }
 	}
 	
-	private LocalDate getLatestStartDate(String in) {
-	    if ((in.charAt(2) == '/') && (in.charAt(5) == '/')) {
-		String yearString = in.substring(6, 10) ;
-		String monthString = in.substring(0, 2) ;
-		String dayString = in.substring(3, 5) ;
+	private LocalDate getLatestStartDate(String dateIn) {
+	    if ((dateIn.charAt(2) == '/') && (dateIn.charAt(5) == '/')) {
+		String yearString = dateIn.substring(6, 10) ;
+		String monthString = dateIn.substring(0, 2) ;
+		String dayString = dateIn.substring(3, 5) ;
 		int year  = Integer.parseInt(yearString) ;
 		int month = Integer.parseInt(monthString) ;
 		int day   = Integer.parseInt(dayString) ; 
