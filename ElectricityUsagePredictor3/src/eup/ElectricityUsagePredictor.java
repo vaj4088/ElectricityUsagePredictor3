@@ -23,6 +23,7 @@ import java.util.concurrent.CountDownLatch;
 
 import javax.swing.Box;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFormattedTextField.AbstractFormatter;
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
@@ -157,10 +158,10 @@ implements ActionListener {
 		    + " while setting Look and Feel.");
 	}
 	
-	//  Create two horizontal boxes, one above the other.
+	//  Create three horizontal boxes, one above the other above the other.
 	//  The upper box will be used for date pickers and a button.
-	//  The bottom box will be used for the operations log and
-	//    will get set up first.
+	//  The middle bbox will have a progress indication.
+	//  The bottom box will be used for the operations log.
 	//
 	//
 	//  Pennywise Power used the "Start Read" reading on a "Date",
@@ -171,9 +172,21 @@ implements ActionListener {
 	Box vbox  = Box.createVerticalBox() ;
 	Box hbox1 = Box.createHorizontalBox() ;
 	vbox.add(hbox1) ;
+	
+	Box hbox2 = Box.createHorizontalBox() ;
+	JComponent pb = fb.getProgressBar() ;
+	pb.setBorder(BorderFactory.
+		createCompoundBorder(BorderFactory.
+			createCompoundBorder(BorderFactory.
+				createTitledBorder("Progress"),
+				BorderFactory.createEmptyBorder(5, 5, 5, 5)),
+				pb.getBorder()));
+	
 	Box hbox3 = Box.createHorizontalBox() ;
+	vbox.add(hbox2) ;
 	vbox.add(hbox3) ;
 
+	hbox2.add(pb) ;
 	hbox3.add(fb.getOperationsLog()) ;
 
 	Properties p = new Properties();
@@ -321,11 +334,15 @@ implements ActionListener {
 	    LocalDate cDLD = gui.cD.toInstant().
 		    atZone(ZoneId.systemDefault()).
 		    toLocalDate() ;
+	    gui.fb.progressAnnounce(true, "Getting data for current date.") ;
 	    SmartMeterTexasDataCollector gdcDLD = 
 		    new SmartMeterTexasDataCollector(cDLD) ;
+	    gdcDLD.setFeedbacker(gui.fb) ;
 	    LocalDate currentDateUsed = gdcDLD.getDate() ;
 	    int currentMeterReading     = 
 		    gdcDLD.getStartRead() ;
+	    gui.fb.progressAnnounce(true,
+		    "Getting data for most recent billing date.") ;
 	    SmartMeterTexasDataCollector gdcBDLD = 
 		    new SmartMeterTexasDataCollector(cBDLD) ;
 	    LocalDate currentBillDateUsed = gdcBDLD.getDate() ;
@@ -367,6 +384,7 @@ implements ActionListener {
 	    sb.append("Days Remaining : ") ;
 	    sb.append(Long.valueOf(predictor.daysRemaining()).toString()) ;
 	    sb.append("\r\n") ;
+	    gui.fb.progressAnnounce(false) ;
 	    //
 	    //  Above does not require EDT.
 	    //
