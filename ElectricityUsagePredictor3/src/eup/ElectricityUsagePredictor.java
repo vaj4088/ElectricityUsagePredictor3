@@ -338,16 +338,16 @@ implements ActionListener {
 	    SmartMeterTexasDataCollector gdcDLD = 
 		    new SmartMeterTexasDataCollector(cDLD) ;
 	    gdcDLD.setFeedbacker(gui.fb) ;
-	    LocalDate currentDateUsed = gdcDLD.getDate() ;
 	    int currentMeterReading     = 
 		    gdcDLD.getStartRead() ;
+	    LocalDate currentDateUsed = gdcDLD.getDate() ;
 	    gui.fb.progressAnnounce(true,
 		    "Getting data for most recent billing date.") ;
 	    SmartMeterTexasDataCollector gdcBDLD = 
 		    new SmartMeterTexasDataCollector(cBDLD) ;
-	    LocalDate currentBillDateUsed = gdcBDLD.getDate() ;
 	    int currentBillMeterReading = 
 		    gdcBDLD.getStartRead() ;
+	    LocalDate currentBillDateUsed = gdcBDLD.getDate() ;
 	    Predictor predictor = new Predictor.Builder().
 		    currentBillDate(currentBillDateUsed).
 		    currentBillMeterReading(currentBillMeterReading).

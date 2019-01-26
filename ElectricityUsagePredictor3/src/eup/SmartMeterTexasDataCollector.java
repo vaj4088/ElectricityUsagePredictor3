@@ -137,7 +137,7 @@ public class SmartMeterTexasDataCollector {
      * 
      */
     public SmartMeterTexasDataCollector(LocalDate date) {
-	this.date = date;
+	this.date = date ;
 	client = new HttpClient();
 	if (displayUseProxy) {
 	    useProxy(client);
@@ -885,7 +885,9 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    return LocalDate.of(year, month, day).plusDays(1) ;
 	}
 	throw new AssertionError(
-		"Bad date string in getLatestStartDate."
+		"Bad date string of " +
+		dateIn +
+		" in getLatestStartDate."
 		) ;
     }
 
@@ -918,8 +920,8 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 		 * If we got here, then fake the end reading
 		 * (making it the same as the start reading
 		 *  because further data is unavailable)
-		 *  and get data for the previous day
-		 *  (because there are suffixes to be handled
+		 * and get data for a prior day
+		 * (because there are suffixes to be handled
 		 *   so that logging out may be performed).
 		 */
 		synchronized (lock) {
@@ -927,19 +929,21 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 		    endRead = startRead ;
 		    dataValid = true ;
 		    dateString = date.minusDays(3).format(dtf) ;
-		    //
-		    //
-		    //  This next line is a MAJOR design decision
-		    //  to change the date of this object to the cached
-		    //  date despite this object having been created 
-		    //  with a different date.
-		    //
-		    //
-		    date = cachedDate ;
-		    //
-		    //
-		    //
-		    dateChanged = true ;
+		    if (date.isAfter(cachedDate)) {
+			//
+			//
+			//  This next line is a MAJOR design decision
+			//  to change the date of this object to the cached
+			//  date despite this object having been created 
+			//  with a different date.
+			//
+			//
+			date = cachedDate ;
+			//
+			//
+			//
+			dateChanged = true ;
+		    }
 		}
 	    } else {
 		synchronized (lock) {
