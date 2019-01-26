@@ -87,6 +87,12 @@ public class FeedbackerImplementation implements Feedbacker {
     JProgressBar progress = new JProgressBar(0, 100);
 
     @Override
+    public JComponent getProgressBar(Color color) {
+	progress.setForeground(color) ;
+	return getProgressBar() ;
+    }
+
+    @Override
     public JComponent getProgressBar() {
 	Box progressBox = Box.createVerticalBox();
 	progressBox.add(progressText);
@@ -328,5 +334,4 @@ public class FeedbackerImplementation implements Feedbacker {
 
 	});
     }
-
 }

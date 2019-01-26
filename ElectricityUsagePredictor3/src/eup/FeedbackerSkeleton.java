@@ -3,6 +3,8 @@
  */
 package eup;
 
+import java.awt.Color;
+
 import javax.swing.JComponent;
 
 /**
@@ -48,6 +50,11 @@ public class FeedbackerSkeleton implements Feedbacker {
 	System.out.print(percent) ;
 	System.out.print(" with info: ") ;
 	msg(info) ;
+    }
+
+    @Override
+    public JComponent getProgressBar(Color color) {
+	return null;
     }
 
     @Override

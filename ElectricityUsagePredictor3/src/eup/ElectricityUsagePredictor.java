@@ -174,14 +174,13 @@ implements ActionListener {
 	vbox.add(hbox1) ;
 	
 	Box hbox2 = Box.createHorizontalBox() ;
-	JComponent pb = fb.getProgressBar() ;
+	JComponent pb = fb.getProgressBar(Color.GREEN) ;
 	pb.setBorder(BorderFactory.
 		createCompoundBorder(BorderFactory.
 			createCompoundBorder(BorderFactory.
 				createTitledBorder("Progress"),
 				BorderFactory.createEmptyBorder(5, 5, 5, 5)),
 				pb.getBorder()));
-	
 	Box hbox3 = Box.createHorizontalBox() ;
 	vbox.add(hbox2) ;
 	vbox.add(hbox3) ;
@@ -308,6 +307,7 @@ implements ActionListener {
 	}
 	while (true) {
 	    ElectricityUsagePredictor gui = guiAtomicReference.get() ;
+	    gui.fb.progressAnnounce(false) ;
 	    gui.cdl = new CountDownLatch(1) ;
 	    try {
 		//

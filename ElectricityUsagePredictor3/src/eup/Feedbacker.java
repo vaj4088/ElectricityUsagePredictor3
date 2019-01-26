@@ -1,6 +1,7 @@
 package eup;
 
-import javax.swing.JComponent;
+import javax.swing.JComponent ;
+import java.awt.Color ;
 
 public interface Feedbacker {
 
@@ -21,8 +22,9 @@ public interface Feedbacker {
     public void progressAnnounce(final boolean enable) ;
 
     public void progressAnnounce(final int percent, final String info);
-
+    
     public JComponent getProgressBar();
+    public JComponent getProgressBar(final Color color) ;
 
     public JComponent getOperationsLog();
     
