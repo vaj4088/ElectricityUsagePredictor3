@@ -67,8 +67,7 @@ public class CommonPreferences {
 		static {
 			Preferences p = null ;
 			try {
-				p =
-					Preferences.userNodeForPackage(
+				p = Preferences.userNodeForPackage(
 							Class.forName(
 			"eup.pref_version_1.PrefVersionPlaceHolder")
 					) ;

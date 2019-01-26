@@ -36,23 +36,37 @@ import java.util.Map;
  * 
  *         Updated 5 Dec 2009 to add 16 settings (numbered 0 through f 
  *         [hexadecimal) for personal time entries.
+ *         Updated 20 Jan 2019 for settings appropriate for predicting
+ *         electricity usage.
  * 
  */
 public class Setting {
     private String name;
     private String defaultValue;
     static Map<String, Setting> settingsMap = Util.makeHashMap();
-    public static final String PROXY_HOST = "proxyhost";
+/*
+ *  public static final String PROXY_HOST = "proxyhost";
     public static final String PROXY_PORT = "proxyport";
     public static final String PROXY_ENABLE = "proxyenable";
     public static final String PROXY_NOPROXYFOR = "proxynoproxyfor";
     public static final String PERSONAL_TIME = "personaltime_";
     public static final String VIEW_COMPRESS_SCHEDULE_VIEW = 
 	"viewcompressscheduleview";
-
+ *
+ */
+    public static final String MOST_RECENT_BILL_DATE_YEAR  = 
+	    "mostRecentBillDateYear" ;
+    public static final String MOST_RECENT_BILL_DATE_MONTH = 
+	    "mostRecentBillDateMonth" ;
+    public static final String MOST_RECENT_BILL_DATE_DAY   = 
+	    "mostRecentBillDateDay" ;
+    public static final String NEXT_BILL_DATE_YEAR  = "nextBillDateYear" ;
+    public static final String NEXT_BILL_DATE_MONTH  = "nextBillDateMonth" ;
+    public static final String NEXT_BILL_DATE_DAY  = "nextBillDateDay" ;
     static {
 	List<Setting> settingsList = Util.makeArrayList(20);
-	settingsList.add(new Setting(PROXY_HOST));
+/*
+ * 	settingsList.add(new Setting(PROXY_HOST));
 	settingsList.add(new Setting(PROXY_PORT).setDefaultValue("80"));
 	settingsList.add(new Setting(PROXY_ENABLE).setDefaultValue("false"));
 	settingsList.add(new Setting(PROXY_NOPROXYFOR));
@@ -63,6 +77,14 @@ public class Setting {
 	}
 	settingsList.add(new Setting(VIEW_COMPRESS_SCHEDULE_VIEW).
 		setDefaultValue("false"));
+ *
+ */
+	settingsList.add(new Setting(MOST_RECENT_BILL_DATE_YEAR,"2019")) ;
+	settingsList.add(new Setting(MOST_RECENT_BILL_DATE_MONTH,"1")) ;
+	settingsList.add(new Setting(MOST_RECENT_BILL_DATE_DAY,"9")) ;
+	settingsList.add(new Setting(NEXT_BILL_DATE_YEAR,"2019")) ;
+	settingsList.add(new Setting(NEXT_BILL_DATE_MONTH,"2")) ;
+	settingsList.add(new Setting(NEXT_BILL_DATE_DAY,"8")) ;
 	for (int i = 0; i < settingsList.size(); i++) {
 	    Setting s = settingsList.get(i);
 	    settingsMap.put(s.name, s);
