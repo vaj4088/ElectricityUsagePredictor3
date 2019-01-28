@@ -795,7 +795,8 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
     }
 
     WebPage login() {
-	List<NameValuePair> nameValuePairs = new ArrayList<>();
+	WebPage wp = null ;
+	
 
 	//
 	// <><><><><>  Get a web page  <><><><><><>
@@ -803,24 +804,30 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	//
 	//  <><><><><>  This web page may be UNNECESSARY.  <><><><><><>
 	//
-	getPage("https://www.smartmetertexas.com:443/CAP/public/"); // 91
+//	getPage("https://www.smartmetertexas.com:443/CAP/public/"); // 91
 
+	List<NameValuePair> nameValuePairs = new ArrayList<>();
 	nameValuePairs.add(new NameValuePair("pass_dup", ""));
 	nameValuePairs.add(new NameValuePair("username", "VAJ4088"));
 	nameValuePairs.add(new NameValuePair("password", "bri2bri"));
 	nameValuePairs.add(new NameValuePair("buttonName", ""));
 	nameValuePairs.add(new NameValuePair("login-form-type", "pwd"));
-	//
-	// <><><><><>  Get a web page  <><><><><><>
-	//
-	//
-	//  <><><><><>  This web page is REQUIRED.  <><><><><><>
-	//
-	WebPage wp = getPage(
-		"https://www.smartmetertexas.com:443/pkmslogin.form",
-		nameValuePairs, null); // 114 POST- sets some cookies and
-	// leads to 115 automatically.
-
+	while (wp == null) {
+	    //
+	    // <><><><><>  Get a web page  <><><><><><>
+	    //
+	    //
+	    //  <><><><><>  This web page is REQUIRED.  <><><><><><>
+	    //
+	    //  The returned web page may be null due to a software-caused
+	    //  connection abort or due to a timeout.
+	    //
+	    //  Keep trying until we receive something not null.
+	    //
+	    wp = getPage("https://www.smartmetertexas.com:443/pkmslogin.form",
+		    nameValuePairs, null); // 114 POST- sets some cookies and
+	    // leads to 115 automatically.
+	}
 	addressSuffix = extractAddressFromLogin(wp);
 	/*
 	 * Need to add getting a web page so that some cookies are set.
@@ -1152,19 +1159,19 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	//
 	// This clears some cookies but is otherwise UNNECESSARY.
 	//
-	getPage("https://www.smartmetertexas.com:443" + addressSuffix);
+//	getPage("https://www.smartmetertexas.com:443" + addressSuffix);
 	//
 	// <><><><><>  This web page is REQUIRED.
 	//
-	getPage("https://www.smartmetertexas.com:443/pkmslogout?"
-		+ "filename=SMTLogout.html&type=public&lang=en");
+//	getPage("https://www.smartmetertexas.com:443/pkmslogout?"
+//		+ "filename=SMTLogout.html&type=public&lang=en");
 	//
 	// <><><><><>  Get a web page  <><><><><><>
 	//
 	//
 	//  <><><><><>  This web page may be UNNECESSARY.  <><><><><><>
 	//
-	getPage("https://www.smartmetertexas.com:443/CAP/public");
+//	getPage("https://www.smartmetertexas.com:443/CAP/public");
     }
 
     public void invoke() {
