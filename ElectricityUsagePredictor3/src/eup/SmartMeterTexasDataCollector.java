@@ -113,10 +113,15 @@ public class SmartMeterTexasDataCollector {
     private boolean displayHeadersAndFooters = false;
     private boolean displayCookies = false;
     private boolean displayPostParameters = false;
-    boolean displayWebPageExtractAddressFromGetData = false ;
-    boolean displayGetDataPage = false ;
-    boolean displayGetDataParameters = false ;
-    boolean displayUseProxy = false ;
+    private boolean displayWebPageExtractAddressFromGetData = false ;
+    private boolean displayGetDataPage = false ;
+    private boolean displayGetDataParameters = false ;
+    private boolean displayUseProxy = false ;
+    private boolean displayRedirectDetails = false ;
+    
+//    private int accessCount = 1 ;
+    private static final int progressDelta = 11 ;
+    private static int progress = progressDelta ;
 
 
     static final AtomicInteger ai = new AtomicInteger() ;
@@ -303,6 +308,11 @@ public class SmartMeterTexasDataCollector {
 	    for (int tryNum = 1; tryNum <= tryRedirectMax; tryNum++) {
 		// Execute the method.
 		statusCode = client.executeMethod(hmb);
+		ElectricityUsagePredictor.
+		  getFeedbacker().
+		    progressAnnounce(progress, "Getting Data");
+		progress += progressDelta ;
+//		msgEDT(toString() + ", Access #" + accessCount++) ;
 		if ((HttpStatus.SC_MOVED_PERMANENTLY == statusCode)
 			|| (HttpStatus.SC_MOVED_TEMPORARILY == statusCode)
 			|| (HttpStatus.SC_SEE_OTHER == statusCode)
@@ -329,10 +339,12 @@ public class SmartMeterTexasDataCollector {
 		    // Second parameter true indicates that the URI
 		    // is already escaped.
 		    hmb.setURI(new URI(redirectLocation, true));
-		    msgEDT(toString() + "#requestResponse redirecting for "
-			    + hmb.getClass().getName() + ", status code "
-			    + statusCode + ": " + hmb.getStatusLine()
-			    + " to " + redirectLocation);
+		    if (displayRedirectDetails) {
+			msgEDT(toString() + "#requestResponse redirecting for "
+				+ hmb.getClass().getName() + ", status code "
+				+ statusCode + ": " + hmb.getStatusLine()
+				+ " to " + redirectLocation);
+		    }
 		    continue; // Loop back and retry.
 
 		} // end of if (statusCode is <any of several values> )

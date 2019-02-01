@@ -6,6 +6,7 @@ package eup;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.GraphicsConfiguration;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -270,6 +271,47 @@ implements ActionListener {
     }
 
     /**
+     * To be called from the EDT.
+     */
+    static Feedbacker getFeedbacker() {
+	return ((ElectricityUsagePredictor)(Frame.getFrames()[0])).fb ; 
+    }
+
+    /**
+     * To be called from the EDT.
+     */
+//    static Feedbacker getFeedbacker() {
+//	for (Frame f : Frame.getFrames()) {
+//	    System.out.println("Frame: " + f);
+//	    if (f instanceof JFrame) {
+//		return ((ElectricityUsagePredictor)f).fb ;
+//		Container c = ((JFrame) f).getContentPane();
+//		System.out.println("__Content Pane: " + c);
+//		getFeedbackerHelper(c, 4) ;
+//	    }
+//	}
+//	return null ;  //  Should not get here.  Avoids a compiler warning.
+//    }
+
+    /**
+     * To be called from the EDT.
+     */
+//    static void getFeedbackerHelper(Container c, int indent) {
+//	for (Component comp : c.getComponents()) {
+//	    if (comp instanceof javax.swing.JProgressBar) {
+//		for (int i=0; i<indent; i++) {
+//		    System.out.print('_'); 
+//		}
+//		System.out.println("Container " + c + " contains: " + comp) ;
+//	    }
+//	    if (comp instanceof Container) {
+//		int nextIndent = indent + 2 ;
+//		getFeedbackerHelper((Container)comp, nextIndent) ; // Recursion!
+//	    }
+//	}
+//    }
+
+    /**
      * @param args
      */
     public static void main(String[] args) {
@@ -334,15 +376,15 @@ implements ActionListener {
 	    LocalDate cDLD = gui.cD.toInstant().
 		    atZone(ZoneId.systemDefault()).
 		    toLocalDate() ;
-	    gui.fb.progressAnnounce(true, "Getting data for current date.") ;
+//	    gui.fb.progressAnnounce(true, "Getting data for current date.") ;
 	    SmartMeterTexasDataCollector gdcDLD = 
 		    new SmartMeterTexasDataCollector(cDLD) ;
 	    gdcDLD.setFeedbacker(gui.fb) ;
 	    int currentMeterReading     = 
 		    gdcDLD.getStartRead() ;
 	    LocalDate currentDateUsed = gdcDLD.getDate() ;
-	    gui.fb.progressAnnounce(true,
-		    "Getting data for most recent billing date.") ;
+//	    gui.fb.progressAnnounce(true,
+//		    "Getting data for most recent billing date.") ;
 	    SmartMeterTexasDataCollector gdcBDLD = 
 		    new SmartMeterTexasDataCollector(cBDLD) ;
 	    int currentBillMeterReading = 
@@ -402,11 +444,12 @@ implements ActionListener {
 	            System.out.println(sb) ;
 		    where.print("Predicted   Usage : ") ;
 		    where.println(predictedUsage) ;
+//		    System.out.println(getFeedbacker()) ;
 	        }
 	    });
 	}
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent ae) {
  	ElectricityUsagePredictor gui = guiAtomicReference.get() ;
