@@ -120,8 +120,11 @@ public class SmartMeterTexasDataCollector {
     private boolean displayRedirectDetails = false ;
     
 //    private int accessCount = 1 ;
-    private static final int progressDelta = 11 ;
-    private static int progress = progressDelta ;
+    private int progressStart ;
+    private int progressDelta ;
+    private String progressLabel ;
+    
+    private int progress ;
 
 
     static final AtomicInteger ai = new AtomicInteger() ;
@@ -131,18 +134,24 @@ public class SmartMeterTexasDataCollector {
     /**
      * No publicly-available no-argument constructor.
      */
-    @SuppressWarnings("unused")
     private SmartMeterTexasDataCollector() {
     }
 
     /**
-     * The publicly-available constructor for getting
+     * A private constructor for getting
      * Smart Meter of Texas information
-     * from my electrical meter.
+     * from my electrical meter.  Use
+     * the builder SmartMeterTexasDataCollector.Builder
+     * to instantiate a SmartMeterTexasDataCollector.
      * 
      */
-    public SmartMeterTexasDataCollector(LocalDate date) {
-	this.date = date ;
+    @SuppressWarnings("synthetic-access")
+    private SmartMeterTexasDataCollector(Builder builder) {
+	this.date = builder.date ;
+	this.progressStart = builder.progressStart ;
+	this.progressDelta = builder.progressDelta ;
+	this.progressLabel = builder.progressLabel ;
+	progress = progressStart ;
 	client = new HttpClient();
 	if (displayUseProxy) {
 	    useProxy(client);
@@ -310,7 +319,7 @@ public class SmartMeterTexasDataCollector {
 		statusCode = client.executeMethod(hmb);
 		ElectricityUsagePredictor.
 		  getFeedbacker().
-		    progressAnnounce(progress, "Getting Data");
+		    progressAnnounce(progress, progressLabel) ;
 		progress += progressDelta ;
 //		msgEDT(toString() + ", Access #" + accessCount++) ;
 		if ((HttpStatus.SC_MOVED_PERMANENTLY == statusCode)
@@ -613,6 +622,42 @@ public class SmartMeterTexasDataCollector {
 	return result;
     }
 
+    public static class Builder {
+	// Required parameters
+	private LocalDate date ;
+	private int progressStart = 20 ;
+	private int progressDelta = 20 ;
+	private String progressLabel = "Get Data" ;
+	
+	// Optional parameters initialized to default values - NONE
+	
+	public Builder date(LocalDate dateOfSMT) {
+	    date = dateOfSMT ;  
+	    return this ;
+	}
+	
+	public Builder startProgressAt(int startProgressAt) {
+	    progressStart = startProgressAt ;
+	    return this ;
+	}
+	
+	public Builder changeProgressBy(int changeProgressBy) {
+	    progressDelta = changeProgressBy ;
+	    return this ;
+	}
+	
+	public Builder labelTheProgress(String labelForTheProgress) {
+	    progressLabel = labelForTheProgress ;
+	    return this ;
+	}
+	
+	@SuppressWarnings("synthetic-access")
+	public SmartMeterTexasDataCollector build() {
+	    return new SmartMeterTexasDataCollector(this) ;
+	}
+    }
+    
+    
     /**
      * A main program for testing purposes to develop and test web access.
      * 

@@ -378,7 +378,9 @@ implements ActionListener {
 		    toLocalDate() ;
 //	    gui.fb.progressAnnounce(true, "Getting data for current date.") ;
 	    SmartMeterTexasDataCollector gdcDLD = 
-		    new SmartMeterTexasDataCollector(cDLD) ;
+		    new SmartMeterTexasDataCollector.Builder().
+		    date(cDLD).
+		    build() ;
 	    gdcDLD.setFeedbacker(gui.fb) ;
 	    int currentMeterReading     = 
 		    gdcDLD.getStartRead() ;
@@ -386,7 +388,9 @@ implements ActionListener {
 //	    gui.fb.progressAnnounce(true,
 //		    "Getting data for most recent billing date.") ;
 	    SmartMeterTexasDataCollector gdcBDLD = 
-		    new SmartMeterTexasDataCollector(cBDLD) ;
+		    new SmartMeterTexasDataCollector.Builder().
+		    date(cBDLD).
+		    build() ;
 	    int currentBillMeterReading = 
 		    gdcBDLD.getStartRead() ;
 	    LocalDate currentBillDateUsed = gdcBDLD.getDate() ;
