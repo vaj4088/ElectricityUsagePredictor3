@@ -380,6 +380,9 @@ implements ActionListener {
 	    SmartMeterTexasDataCollector gdcDLD = 
 		    new SmartMeterTexasDataCollector.Builder().
 		    date(cDLD).
+		    startProgressAt(11).
+		    changeProgressBy(11).
+		    labelTheProgress("Getting data for current date.").
 		    build() ;
 	    gdcDLD.setFeedbacker(gui.fb) ;
 	    int currentMeterReading     = 
@@ -390,6 +393,10 @@ implements ActionListener {
 	    SmartMeterTexasDataCollector gdcBDLD = 
 		    new SmartMeterTexasDataCollector.Builder().
 		    date(cBDLD).
+		    startProgressAt(66).
+		    changeProgressBy(11).
+		    labelTheProgress
+		            ("Getting data for most recent billing date.").
 		    build() ;
 	    int currentBillMeterReading = 
 		    gdcBDLD.getStartRead() ;

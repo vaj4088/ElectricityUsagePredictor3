@@ -321,6 +321,8 @@ public class SmartMeterTexasDataCollector {
 		  getFeedbacker().
 		    progressAnnounce(progress, progressLabel) ;
 		progress += progressDelta ;
+		if (progress<  0) progress =   0 ;
+		if (progress>100) progress = 100 ;
 //		msgEDT(toString() + ", Access #" + accessCount++) ;
 		if ((HttpStatus.SC_MOVED_PERMANENTLY == statusCode)
 			|| (HttpStatus.SC_MOVED_TEMPORARILY == statusCode)
