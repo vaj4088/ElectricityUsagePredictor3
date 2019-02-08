@@ -15,10 +15,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.Month;
 import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
@@ -72,6 +72,29 @@ implements ActionListener {
     private Date cBD ;
     private Date cD ;
     private Date nBD ;
+    
+	/*
+	 * Used for getting stored billing date information.
+	 */
+	
+    Map<?extends String, ? extends String> store = 
+	    CommonPreferences.getPreferences() ;
+    Map<? extends String, ? extends Setting> settingsMap = 
+	    Setting.getSettingsMap() ;
+
+	/*
+	 * End of used for getting stored billing date information.
+	 */
+    
+    public static final String MOST_RECENT_BILL_DATE_YEAR  = 
+	    "mostRecentBillDateYear" ;
+    public static final String MOST_RECENT_BILL_DATE_MONTH = 
+	    "mostRecentBillDateMonth" ;
+    public static final String MOST_RECENT_BILL_DATE_DAY   = 
+	    "mostRecentBillDateDay" ;
+    public static final String NEXT_BILL_DATE_YEAR  = "nextBillDateYear" ;
+    public static final String NEXT_BILL_DATE_MONTH  = "nextBillDateMonth" ;
+    public static final String NEXT_BILL_DATE_DAY  = "nextBillDateDay" ;
 
     /**
      * 
@@ -191,9 +214,24 @@ implements ActionListener {
 
 	Properties p = new Properties();
 	
+	/*
+	 * Getting stored billing date information.
+	 */
+	
 	UtilDateModel modelCurrentBillDate = new UtilDateModel(
-		Date.from(LocalDate.of(2019, Month.JANUARY, 9).
+		Date.from(LocalDate.of(
+	       Integer.parseInt(store.get(Setting.MOST_RECENT_BILL_DATE_YEAR)), 
+	       Integer.parseInt(store.get(Setting.MOST_RECENT_BILL_DATE_MONTH)), 
+	       Integer.parseInt(store.get(Setting.MOST_RECENT_BILL_DATE_DAY))).
 			atStartOfDay(ZoneId.systemDefault()).toInstant())) ;
+
+	/*
+	 * Got the stored billing date information.
+	 */
+	
+//	UtilDateModel modelCurrentBillDate = new UtilDateModel(
+//		Date.from(LocalDate.of(2019, Month.JANUARY, 9).
+//			atStartOfDay(ZoneId.systemDefault()).toInstant())) ;
 	JDatePanelImpl datePanelCurrentBillDate = 
 		new JDatePanelImpl(modelCurrentBillDate, p);
 	datePickerCurrentBillDate = 
@@ -227,9 +265,24 @@ implements ActionListener {
 //	vboxCurrent.add(new )
 	hbox1.add(datePickerCurrentDate) ;
 	
+	/*
+	 * Getting stored billing date information.
+	 */
+	
 	UtilDateModel modelNextBillDate = new UtilDateModel(
-		Date.from(LocalDate.of(2019, Month.FEBRUARY, 8).
+		Date.from(LocalDate.of(
+		    Integer.parseInt(store.get(Setting.NEXT_BILL_DATE_YEAR)), 
+		    Integer.parseInt(store.get(Setting.NEXT_BILL_DATE_MONTH)), 
+		    Integer.parseInt(store.get(Setting.NEXT_BILL_DATE_DAY))).
 			atStartOfDay(ZoneId.systemDefault()).toInstant())) ;
+
+	/*
+	 * Got the stored billing date information.
+	 */
+	
+//	UtilDateModel modelNextBillDate = new UtilDateModel(
+//		Date.from(LocalDate.of(2019, Month.FEBRUARY, 8).
+//			atStartOfDay(ZoneId.systemDefault()).toInstant())) ;
 	JDatePanelImpl datePanelNextBillDate = 
 		new JDatePanelImpl(modelNextBillDate, p);
 	datePickerNextBillDate = 
@@ -376,6 +429,42 @@ implements ActionListener {
 	    LocalDate cDLD = gui.cD.toInstant().
 		    atZone(ZoneId.systemDefault()).
 		    toLocalDate() ;
+	    
+	    /*
+	     * Store the year, month and day of the billing dates
+	     * as the user has selected them, to be available for
+	     * usage next time.
+	     */
+	    
+	    CommonPreferences.set(
+		    gui.settingsMap.get(MOST_RECENT_BILL_DATE_YEAR), 
+		    String.valueOf(cBDLD.getYear())) ;
+	    CommonPreferences.set(
+		    gui.settingsMap.get(MOST_RECENT_BILL_DATE_MONTH), 
+		    String.valueOf(cBDLD.getMonthValue())) ;
+	    CommonPreferences.set(
+		    gui.settingsMap.get(MOST_RECENT_BILL_DATE_MONTH), 
+		    String.valueOf(cBDLD.getDayOfMonth())) ;
+	    /*
+	     * bd is Next Billing Date nBd, converted from Date to LocalDate.
+	     */
+	    LocalDate bd = gui.nBD.toInstant().
+		    atZone(ZoneId.systemDefault()).toLocalDate() ;
+	    
+	    CommonPreferences.set(
+		    gui.settingsMap.get(NEXT_BILL_DATE_YEAR), 
+		    String.valueOf(bd.getYear())) ;
+	    CommonPreferences.set(
+		    gui.settingsMap.get(NEXT_BILL_DATE_MONTH), 
+		    String.valueOf(bd.getMonthValue())) ;
+	    CommonPreferences.set(
+		    gui.settingsMap.get(NEXT_BILL_DATE_MONTH), 
+		    String.valueOf(bd.getDayOfMonth())) ;
+
+	    /*
+	     * End of storing year, month and day of the billing dates.
+	     */
+	    
 //	    gui.fb.progressAnnounce(true, "Getting data for current date.") ;
 	    SmartMeterTexasDataCollector gdcDLD = 
 		    new SmartMeterTexasDataCollector.Builder().
@@ -406,8 +495,7 @@ implements ActionListener {
 		    currentBillMeterReading(currentBillMeterReading).
 		    currentDate(currentDateUsed).
 		    currentMeterReading(currentMeterReading).
-		    nextBillDate(gui.nBD.toInstant().
-			    atZone(ZoneId.systemDefault()).toLocalDate()).
+		    nextBillDate(bd).
 		    build();
 	    StringBuilder sb = new StringBuilder("\r\n") ;
 	    sb.append("Current Bill Date: ") ;
