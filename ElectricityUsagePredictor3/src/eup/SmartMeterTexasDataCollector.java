@@ -392,6 +392,33 @@ public class SmartMeterTexasDataCollector {
 	    System.err.println("Fatal protocol violation: " + e.getMessage());
 	    e.printStackTrace();
 	} catch (IOException e) {
+	    /*
+	     * 
+Fatal transport error: www.smartmetertexas.com
+java.net.UnknownHostException: www.smartmetertexas.com
+        at java.net.AbstractPlainSocketImpl.connect(Unknown Source)
+        at java.net.PlainSocketImpl.connect(Unknown Source)
+        at java.net.SocksSocketImpl.connect(Unknown Source)
+        at java.net.Socket.connect(Unknown Source)
+        at sun.security.ssl.SSLSocketImpl.connect(Unknown Source)
+        at sun.security.ssl.SSLSocketImpl.<init>(Unknown Source)
+        at sun.security.ssl.SSLSocketFactoryImpl.createSocket(Unknown Source)
+        at org.apache.commons.httpclient.protocol.SSLProtocolSocketFactory.createSocket(SSLProtocolSocketFactory.java:82)
+        at org.apache.commons.httpclient.protocol.SSLProtocolSocketFactory.createSocket(SSLProtocolSocketFactory.java:127)
+        at org.apache.commons.httpclient.HttpConnection.open(HttpConnection.java:707)
+        at org.apache.commons.httpclient.HttpMethodDirector.executeWithRetry(HttpMethodDirector.java:387)
+        at org.apache.commons.httpclient.HttpMethodDirector.executeMethod(HttpMethodDirector.java:171)
+        at org.apache.commons.httpclient.HttpClient.executeMethod(HttpClient.java:397)
+        at org.apache.commons.httpclient.HttpClient.executeMethod(HttpClient.java:323)
+        at eup.SmartMeterTexasDataCollector.requestResponse(SmartMeterTexasDataCollector.java:319)
+        at eup.SmartMeterTexasDataCollector.getPage(SmartMeterTexasDataCollector.java:281)
+        at eup.SmartMeterTexasDataCollector.getPage(SmartMeterTexasDataCollector.java:214)
+        at eup.SmartMeterTexasDataCollector.login(SmartMeterTexasDataCollector.java:886)
+        at eup.SmartMeterTexasDataCollector.invoke(SmartMeterTexasDataCollector.java:1237)
+        at eup.SmartMeterTexasDataCollector.getStartRead(SmartMeterTexasDataCollector.java:1260)
+        at eup.ElectricityUsagePredictor.main(ElectricityUsagePredictor.java:491) 
+             *
+	     */
 	    System.err.println("Fatal transport error: " + e.getMessage());
 	    e.printStackTrace();
 	} finally {
