@@ -84,6 +84,12 @@ public class Predictor {
 		    between(getDateCurrent(), getDateBillNext()) ;
 	    return result ;
 	}
+	
+	public long billingCycleDurationDays() {
+	    long result = ChronoUnit.DAYS.
+		    between(getDateBillCurrent(), getDateBillNext()) ;
+	    return result ;
+	}
 
 public static class Builder {
 	// Required parameters

@@ -521,6 +521,10 @@ implements ActionListener {
 	    sb.append("\r\n\r\n") ;
 	    sb.append("Next    Bill Date   : ");
 	    sb.append(predictor.getDateBillNext().toString()) ;
+	    sb.append(" with a billing cycle duration of ") ;
+	    sb.append(Long.valueOf(predictor.
+		    billingCycleDurationDays()).toString()) ;
+	    sb.append(" days.") ;
 	    sb.append("\r\n") ;
 	    sb.append("Days Remaining : ") ;
 	    sb.append(Long.valueOf(predictor.daysRemaining()).toString()) ;
