@@ -443,7 +443,7 @@ implements ActionListener {
 		    gui.settingsMap.get(MOST_RECENT_BILL_DATE_MONTH), 
 		    String.valueOf(cBDLD.getMonthValue())) ;
 	    CommonPreferences.set(
-		    gui.settingsMap.get(MOST_RECENT_BILL_DATE_MONTH), 
+		    gui.settingsMap.get(MOST_RECENT_BILL_DATE_DAY), 
 		    String.valueOf(cBDLD.getDayOfMonth())) ;
 	    /*
 	     * bd is Next Billing Date nBd, converted from Date to LocalDate.
@@ -458,7 +458,7 @@ implements ActionListener {
 		    gui.settingsMap.get(NEXT_BILL_DATE_MONTH), 
 		    String.valueOf(bd.getMonthValue())) ;
 	    CommonPreferences.set(
-		    gui.settingsMap.get(NEXT_BILL_DATE_MONTH), 
+		    gui.settingsMap.get(NEXT_BILL_DATE_DAY), 
 		    String.valueOf(bd.getDayOfMonth())) ;
 
 	    /*
