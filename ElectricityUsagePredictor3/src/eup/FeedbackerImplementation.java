@@ -13,6 +13,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Calendar;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -68,6 +71,13 @@ public class FeedbackerImplementation implements Feedbacker {
 	    + HTMLEol
 	    + defaultLogFont
 	    ;
+
+    private static final ScheduledExecutorService scheduler =
+	    Executors.newScheduledThreadPool(1);
+    private static final int numActivityFrames   =  10 ;
+    private static final int activityFrameMillis = 120 ;
+    int activityFrame;
+    private static ScheduledFuture<?> activityHandle ;
 
     private transient OutputStream logStream;
     StringBuilder logString = new StringBuilder(32768).append(initialLogString);
@@ -241,6 +251,7 @@ public class FeedbackerImplementation implements Feedbacker {
 
     @Override
     public void progressAnnounce(final boolean enable, final String info) {
+	if (activityHandle != null && !enable) activityHandle.cancel(true) ;
 	SwingUtilities.invokeLater(new Runnable() {
 	    @Override
 	    public void run() {
@@ -269,6 +280,36 @@ public class FeedbackerImplementation implements Feedbacker {
 		progressText.setString(processedInfo);
 	    }
 	});
+    }
+    
+    @Override
+    public void activityAnnounce(
+	    final int currentPercent, 
+	    final String info, 
+	    final int maxPercent
+	    ) {
+	final Runnable activity = new Runnable() {
+	    @Override
+	    public void run() {
+		int bar = currentPercent + 
+			((activityFrame++) * 
+				(maxPercent-currentPercent))/numActivityFrames ;
+		if (bar <   0) bar =   0 ;
+		if (bar > 100) bar = 100 ;
+		if (activityFrame >= numActivityFrames) activityFrame = 0 ;
+		progressAnnounce(bar, info) ;
+		}
+	};
+	if (activityHandle != null) {
+	    activityHandle.cancel(true) ;
+	}
+	activityFrame = 0 ;
+	activityHandle =
+		scheduler.scheduleAtFixedRate(
+			activity, 
+			0, 
+			activityFrameMillis, 
+			java.util.concurrent.TimeUnit.MILLISECONDS);
     }
 
     /*
