@@ -28,4 +28,10 @@ public interface Feedbacker {
 
     public JComponent getOperationsLog();
     
+    public void activityAnnounce(
+                                 final int currentPercent, 
+                                 final String info, 
+                                 final int maxPercent
+                                ) ;
+    
 }
