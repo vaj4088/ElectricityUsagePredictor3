@@ -316,13 +316,16 @@ public class SmartMeterTexasDataCollector {
 	    statusCode = -1;
 	    for (int tryNum = 1; tryNum <= tryRedirectMax; tryNum++) {
 		// Execute the method.
-		statusCode = client.executeMethod(hmb);
+		statusCode = client.executeMethod(hmb) ;
+		int max = progress+progressDelta ;
+		if (max < 0)   max =   0 ;
+		if (max > 100) max = 100 ;
 		ElectricityUsagePredictor.
 		  getFeedbacker().
-		    progressAnnounce(progress, progressLabel) ;
+		    activityAnnounce(progress, progressLabel, max) ;
 		progress += progressDelta ;
-		if (progress<  0) progress =   0 ;
-		if (progress>100) progress = 100 ;
+		if (progress <   0) progress =   0 ;
+		if (progress > 100) progress = 100 ;
 //		msgEDT(toString() + ", Access #" + accessCount++) ;
 		if ((HttpStatus.SC_MOVED_PERMANENTLY == statusCode)
 			|| (HttpStatus.SC_MOVED_TEMPORARILY == statusCode)
@@ -420,6 +423,14 @@ java.net.UnknownHostException: www.smartmetertexas.com
              *
 	     */
 	    System.err.println("Fatal transport error: " + e.getMessage());
+	    /*
+	     * Added lines to get more information on Unknown Host.
+	     */
+	    System.err.println("Cause: " + e.getCause()) ;
+	    System.err.println("toString: " + e.toString()) ;
+	    /*
+	     * End of added lines to get more information on Unknown Host.
+	     */
 	    e.printStackTrace();
 	} finally {
 	    // Use "method" to provide various pieces
