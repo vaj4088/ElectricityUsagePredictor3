@@ -60,6 +60,10 @@ public class Setting {
 	    "mostRecentBillDateMonth" ;
     public static final String MOST_RECENT_BILL_DATE_DAY   = 
 	    "mostRecentBillDateDay" ;
+    public static final String MOST_RECENT_BILL_DATE_READING  = 
+	    "mostRecentBillDateReaading" ;
+    public static final String MOST_RECENT_BILL_DATE_VALID  = 
+	    "mostRecentBillDateValid" ;
     public static final String NEXT_BILL_DATE_YEAR  = "nextBillDateYear" ;
     public static final String NEXT_BILL_DATE_MONTH  = "nextBillDateMonth" ;
     public static final String NEXT_BILL_DATE_DAY  = "nextBillDateDay" ;
@@ -82,6 +86,8 @@ public class Setting {
 	settingsList.add(new Setting(MOST_RECENT_BILL_DATE_YEAR,"2019")) ;
 	settingsList.add(new Setting(MOST_RECENT_BILL_DATE_MONTH,"1")) ;
 	settingsList.add(new Setting(MOST_RECENT_BILL_DATE_DAY,"9")) ;
+	settingsList.add(new Setting(MOST_RECENT_BILL_DATE_READING,"-1")) ;
+	settingsList.add(new Setting(MOST_RECENT_BILL_DATE_VALID,"FALSE")) ;
 	settingsList.add(new Setting(NEXT_BILL_DATE_YEAR,"2019")) ;
 	settingsList.add(new Setting(NEXT_BILL_DATE_MONTH,"2")) ;
 	settingsList.add(new Setting(NEXT_BILL_DATE_DAY,"8")) ;
