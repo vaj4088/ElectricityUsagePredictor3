@@ -75,7 +75,7 @@ public class FeedbackerImplementation implements Feedbacker {
     private static final ScheduledExecutorService scheduler =
 	    Executors.newScheduledThreadPool(1);
     private static final int numActivityFrames   =  10 ;
-    private static final int activityFrameMillis = 120 ;
+    private static final int activityFrameMillis =  80 ;
     int activityFrame;
     private static ScheduledFuture<?> activityHandle ;
 

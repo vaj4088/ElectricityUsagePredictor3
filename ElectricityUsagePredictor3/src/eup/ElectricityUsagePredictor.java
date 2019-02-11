@@ -53,7 +53,12 @@ implements ActionListener {
      */
     private static final boolean disableOutRedirection = false;
     private static final boolean disableErrRedirection = false;
-
+    
+    private static final int startProgress1 = 10 ;
+    private static final int changeProgress = 10 ;
+    private static final int startProgress2 = 
+	    startProgress1 + 5 * changeProgress ;
+    
     private static final long serialVersionUID = 1L;
 
     JDatePickerImpl datePickerCurrentBillDate ;
@@ -469,8 +474,8 @@ implements ActionListener {
 	    SmartMeterTexasDataCollector gdcDLD = 
 		    new SmartMeterTexasDataCollector.Builder().
 		    date(cDLD).
-		    startProgressAt(11).
-		    changeProgressBy(11).
+		    startProgressAt(startProgress1).
+		    changeProgressBy(changeProgress).
 		    labelTheProgress("Getting data for current date.").
 		    build() ;
 	    gdcDLD.setFeedbacker(gui.fb) ;
@@ -482,8 +487,8 @@ implements ActionListener {
 	    SmartMeterTexasDataCollector gdcBDLD = 
 		    new SmartMeterTexasDataCollector.Builder().
 		    date(cBDLD).
-		    startProgressAt(66).
-		    changeProgressBy(11).
+		    startProgressAt(startProgress2).
+		    changeProgressBy(changeProgress).
 		    labelTheProgress
 		            ("Getting data for most recent billing date.").
 		    build() ;
@@ -530,17 +535,17 @@ implements ActionListener {
 	    sb.append(Long.valueOf(predictor.daysRemaining()).toString()) ;
 	    sb.append("\r\n") ;
 	    gui.fb.progressAnnounce(false) ;
+	    int predictedUsage = predictor.predictUsage() ;
+	    @SuppressWarnings("resource")
+	    PrintStream where = 
+	        ((predictedUsage>=500) && (predictedUsage<=1000))?
+	        	System.out:System.err ;
 	    //
 	    //  Above does not require EDT.
 	    //
 	    //
 	    //  Below outputs to gui so should be on EDT.
 	    //
-	    int predictedUsage = predictor.predictUsage() ;
-	    @SuppressWarnings("resource")
-	    PrintStream where = 
-	        ((predictedUsage>=500) && (predictedUsage<=1000))?
-	        	System.out:System.err ;
 	    SwingUtilities.invokeLater(new Runnable() {
 	        @Override
 	        public void run() {
