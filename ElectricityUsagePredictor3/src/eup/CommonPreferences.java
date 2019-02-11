@@ -156,13 +156,17 @@ public class CommonPreferences {
 		} catch (BackingStoreException e) {
 			// Ignore if backing store is not available.
 			Util.msg( Util.getCallerClassName() + "." +
-					Util.getCallerMethodName() + "() failed to sync due "+
+					Util.getCallerMethodName() + 
+					"() failed to sync due "+
 					"to a Backing Store Exception.") ;
 		}
 		result = Util.makeHashMap(Setting.settingsMap.size()) ;
 		for (Setting s: Setting.settingsMap.values()) {
 			result.put(s.getName(), 
-					prefs.get(s.getName(), s.getDefaultValue())) ;
+					prefs.get(
+						s.getName(), 
+						s.getDefaultValue())
+					) ;
 		}
 		result = Collections.unmodifiableMap(result) ;
 		return result ;
@@ -201,7 +205,9 @@ public class CommonPreferences {
 	 */
 	public static synchronized void 
 	removePreferenceChangeListener(PreferenceChangeListener pcl) {
-		CommonPreferencesHolder.prefs.removePreferenceChangeListener(pcl);
+		CommonPreferencesHolder.prefs.removePreferenceChangeListener(
+			pcl
+			) ;
 	}
 	
 	private static void deleteUnnecessarySettings() {
@@ -213,14 +219,16 @@ public class CommonPreferences {
 			Collections.addAll(keys, prefs.keys()) ;
 		} catch (BackingStoreException e) {
 			Util.msg(Util.getCallerClassName() + "." +
-					Util.getCallerMethodName() + "() failed to get keys due "+
+					Util.getCallerMethodName() + 
+					"() failed to get keys due "+
 			"to a Backing Store Exception.") ;
 		}
 		for (String k: keys) {
 			if (!Setting.settingsMap.containsKey(k)) {
 				prefs.remove(k) ;
 				Util.msg(Util.getCallerClassName() + "." +
-						Util.getCallerMethodName() + "() removed "+
+						Util.getCallerMethodName() + 
+						"() removed "+
 				"setting " + k) ;
 			}
 		}
@@ -242,12 +250,15 @@ public class CommonPreferences {
 			Collections.addAll(prefsKeySet, prefs.keys()) ;
 		} catch (BackingStoreException e) {
 			Util.msg(Util.getCallerClassName() + "." +
-					Util.getCallerMethodName() + "() failed due "+
+					Util.getCallerMethodName() + 
+					"() failed due "+
 			"to a Backing Store Exception.") ;
 		}
 		for (Setting element : Setting.settingsMap.values()) {
 			if (!prefsKeySet.contains(element.getName())) {
-				prefs.put(element.getName(), element.getDefaultValue()) ;
+				prefs.put(
+					element.getName(), 
+					element.getDefaultValue()) ;
 			}
 		}
 	}
@@ -261,19 +272,30 @@ public class CommonPreferences {
 		NodeChangeListener ncl = new NodeChangeListener() {
 			@Override
 			public void childAdded(NodeChangeEvent evt) {
-				Util.msg("NodeChangeListener childAdded: " + evt) ;				
+				Util.msg(
+					"NodeChangeListener childAdded: " + 
+				evt
+				) ;				
 			}
 			@Override
 			public void childRemoved(NodeChangeEvent evt) {
-				Util.msg("NodeChangeListener childRemoved: " + evt) ;				
+				Util.msg(
+					"NodeChangeListener childRemoved: " + 
+				evt
+				) ;				
 			}
 		} ;
 		PreferenceChangeListener pcl = new PreferenceChangeListener() {
 			@Override
-			public void preferenceChange(PreferenceChangeEvent evt) {
-				Util.msg("preferenceChangeListener preferenceChange: " + evt + 
-						" key = " + evt.getKey() + ", new value = " +
-						evt.getNewValue()) ;				
+			public void preferenceChange(PreferenceChangeEvent evt) 
+			{
+				Util.msg(
+				"preferenceChangeListener preferenceChange: " + 
+				evt + 
+				" key = " + 
+				evt.getKey() + 
+				", new value = " +
+				evt.getNewValue()) ;				
 			}
 		} ;
 		addNodeChangeListener(ncl) ;
@@ -283,7 +305,10 @@ public class CommonPreferences {
 		Util.msg("") ;
 
 		set(Setting.settingsMap.get("proxyhost"), "proxyhost_test") ;
-		set(Setting.settingsMap.get("proxynoproxyfor"), "proxynoproxyfor_test") ;
+		set(Setting.settingsMap.get(
+			"proxynoproxyfor"), 
+			"proxynoproxyfor_test"
+			) ;
 		set(Setting.settingsMap.get("proxyenable"), "true") ;
 		set(Setting.settingsMap.get("proxyport"), "8765") ;
 		displayPreferences("\n ##  Preferences after changes.") ;
@@ -306,7 +331,8 @@ public class CommonPreferences {
 	 */
 	static void displayPreferences(Object s) {
 		Util.msg(s) ;
-		Map<? extends String, ? extends String> stdPrefs = getPreferences() ;
+		Map<? extends String, ? extends String> stdPrefs = 
+			getPreferences() ;
 		for (Object k : stdPrefs.keySet()) {
 			Object v = stdPrefs.get(k) ;
 			Util.msg("Standard preference key = " + k +
@@ -314,7 +340,9 @@ public class CommonPreferences {
 		}
 	}
 
-	public static char getElementSeparator() { return '\u0001' ; } // u0001 = SOH
-
+	public static char getElementSeparator() { return '\u0001' ; }
+	/*
+	 * u0001 = SOH
+	 */
 }
 
