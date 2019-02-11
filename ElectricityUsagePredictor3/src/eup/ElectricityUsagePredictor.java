@@ -422,6 +422,11 @@ implements ActionListener {
 		// Restore the interrupted status
 		Thread.currentThread().interrupt();
 	    }
+	    gui.fb.activityAnnounce(
+		    startProgress1, 
+		    "Starting...", 
+		    startProgress1+changeProgress
+		    ) ;
 	    //
 	    // cBDLD is current current Bill Date as a Local Date
 	    //
