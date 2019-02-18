@@ -54,6 +54,9 @@ public class Setting {
 	"viewcompressscheduleview";
  *
  */
+    public static final String VALID               = "Valid" ;
+    public static final String INVALID             = "Invalid" ;
+    
     public static final String MOST_RECENT_BILL_DATE_YEAR  = 
 	    "mostRecentBillDateYear" ;
     public static final String MOST_RECENT_BILL_DATE_MONTH = 
@@ -61,12 +64,25 @@ public class Setting {
     public static final String MOST_RECENT_BILL_DATE_DAY   = 
 	    "mostRecentBillDateDay" ;
     public static final String MOST_RECENT_BILL_DATE_READING  = 
-	    "mostRecentBillDateReaading" ;
-    public static final String MOST_RECENT_BILL_DATE_VALID  = 
-	    "mostRecentBillDateValid" ;
+	    "mostRecentBillDateReading" ;
+    public static String MOST_RECENT_BILL_READING_VALIDITY  = 
+	    INVALID ;
+    
+    public static final String CURRENT_DATE_YEAR  = 
+	    "currentDateYear" ;
+    public static final String CURRENT_DATE_MONTH = 
+	    "currentDateMonth" ;
+    public static final String CURRENT_DATE_DAY   = 
+	    "currentDateDay" ;
+    public static final String CURRENT_DATE_READING  = 
+	    "currentDateReading" ;
+    public static String CURRENT_READING_VALIDITY  = 
+	    INVALID ;
+    
     public static final String NEXT_BILL_DATE_YEAR  = "nextBillDateYear" ;
     public static final String NEXT_BILL_DATE_MONTH  = "nextBillDateMonth" ;
     public static final String NEXT_BILL_DATE_DAY  = "nextBillDateDay" ;
+    
     static {
 	List<Setting> settingsList = Util.makeArrayList(20);
 /*
@@ -83,18 +99,32 @@ public class Setting {
 		setDefaultValue("false"));
  *
  */
-	settingsList.add(new Setting(MOST_RECENT_BILL_DATE_YEAR,"2019")) ;
-	settingsList.add(new Setting(MOST_RECENT_BILL_DATE_MONTH,"1")) ;
-	settingsList.add(new Setting(MOST_RECENT_BILL_DATE_DAY,"9")) ;
+	settingsList.add(new Setting(MOST_RECENT_BILL_DATE_YEAR, "2019")) ;
+	settingsList.add(new Setting(MOST_RECENT_BILL_DATE_MONTH,   "1")) ;
+	settingsList.add(new Setting(MOST_RECENT_BILL_DATE_DAY,     "9")) ;
 	settingsList.add(new Setting(MOST_RECENT_BILL_DATE_READING,"-1")) ;
-	settingsList.add(new Setting(MOST_RECENT_BILL_DATE_VALID,"FALSE")) ;
-	settingsList.add(new Setting(NEXT_BILL_DATE_YEAR,"2019")) ;
-	settingsList.add(new Setting(NEXT_BILL_DATE_MONTH,"2")) ;
-	settingsList.add(new Setting(NEXT_BILL_DATE_DAY,"8")) ;
-	for (int i = 0; i < settingsList.size(); i++) {
-	    Setting s = settingsList.get(i);
-	    settingsMap.put(s.name, s);
+	settingsList.add(new Setting(
+		MOST_RECENT_BILL_READING_VALIDITY, INVALID)) ;
+	
+	settingsList.add(new Setting(CURRENT_DATE_YEAR, "2019")) ;
+	settingsList.add(new Setting(CURRENT_DATE_MONTH,   "1")) ;
+	settingsList.add(new Setting(CURRENT_DATE_DAY,    "11")) ;
+	settingsList.add(new Setting(CURRENT_DATE_READING,"-1")) ;
+	settingsList.add(new Setting(
+		CURRENT_READING_VALIDITY, INVALID)) ;
+	
+	settingsList.add(new Setting(NEXT_BILL_DATE_YEAR,  "2019")) ;
+	settingsList.add(new Setting(NEXT_BILL_DATE_MONTH,    "2")) ;
+	settingsList.add(new Setting(NEXT_BILL_DATE_DAY,      "8")) ;
+	
+	for (Setting s: settingsList) {
+	    settingsMap.put(s.name, s) ;
 	}
+	
+//	for (int i = 0; i < settingsList.size(); i++) {
+//	    Setting s = settingsList.get(i);
+//	    settingsMap.put(s.name, s);
+//	}
     }
 
     private Setting(String name, String defaultValue) {

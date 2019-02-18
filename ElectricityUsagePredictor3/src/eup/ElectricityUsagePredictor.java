@@ -91,15 +91,15 @@ implements ActionListener {
 	 * End of used for getting stored billing date information.
 	 */
     
-    public static final String MOST_RECENT_BILL_DATE_YEAR  = 
-	    "mostRecentBillDateYear" ;
-    public static final String MOST_RECENT_BILL_DATE_MONTH = 
-	    "mostRecentBillDateMonth" ;
-    public static final String MOST_RECENT_BILL_DATE_DAY   = 
-	    "mostRecentBillDateDay" ;
-    public static final String NEXT_BILL_DATE_YEAR  = "nextBillDateYear" ;
-    public static final String NEXT_BILL_DATE_MONTH  = "nextBillDateMonth" ;
-    public static final String NEXT_BILL_DATE_DAY  = "nextBillDateDay" ;
+//    public static final String MOST_RECENT_BILL_DATE_YEAR  = 
+//	    "mostRecentBillDateYear" ;
+//    public static final String MOST_RECENT_BILL_DATE_MONTH = 
+//	    "mostRecentBillDateMonth" ;
+//    public static final String MOST_RECENT_BILL_DATE_DAY   = 
+//	    "mostRecentBillDateDay" ;
+//    public static final String NEXT_BILL_DATE_YEAR  = "nextBillDateYear" ;
+//    public static final String NEXT_BILL_DATE_MONTH  = "nextBillDateMonth" ;
+//    public static final String NEXT_BILL_DATE_DAY  = "nextBillDateDay" ;
 
     /**
      * 
@@ -447,13 +447,13 @@ implements ActionListener {
 	     */
 	    
 	    CommonPreferences.set(
-		    gui.settingsMap.get(MOST_RECENT_BILL_DATE_YEAR), 
+		    gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_YEAR), 
 		    String.valueOf(cBDLD.getYear())) ;
 	    CommonPreferences.set(
-		    gui.settingsMap.get(MOST_RECENT_BILL_DATE_MONTH), 
+		    gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_MONTH), 
 		    String.valueOf(cBDLD.getMonthValue())) ;
 	    CommonPreferences.set(
-		    gui.settingsMap.get(MOST_RECENT_BILL_DATE_DAY), 
+		    gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_DAY), 
 		    String.valueOf(cBDLD.getDayOfMonth())) ;
 	    /*
 	     * bd is Next Billing Date nBd, converted from Date to LocalDate.
@@ -462,13 +462,13 @@ implements ActionListener {
 		    atZone(ZoneId.systemDefault()).toLocalDate() ;
 	    
 	    CommonPreferences.set(
-		    gui.settingsMap.get(NEXT_BILL_DATE_YEAR), 
+		    gui.settingsMap.get(Setting.NEXT_BILL_DATE_YEAR), 
 		    String.valueOf(bd.getYear())) ;
 	    CommonPreferences.set(
-		    gui.settingsMap.get(NEXT_BILL_DATE_MONTH), 
+		    gui.settingsMap.get(Setting.NEXT_BILL_DATE_MONTH), 
 		    String.valueOf(bd.getMonthValue())) ;
 	    CommonPreferences.set(
-		    gui.settingsMap.get(NEXT_BILL_DATE_DAY), 
+		    gui.settingsMap.get(Setting.NEXT_BILL_DATE_DAY), 
 		    String.valueOf(bd.getDayOfMonth())) ;
 
 	    /*
@@ -489,17 +489,50 @@ implements ActionListener {
 	    LocalDate currentDateUsed = gdcDLD.getDate() ;
 //	    gui.fb.progressAnnounce(true,
 //		    "Getting data for most recent billing date.") ;
-	    SmartMeterTexasDataCollector gdcBDLD = 
-		    new SmartMeterTexasDataCollector.Builder().
-		    date(cBDLD).
-		    startProgressAt(startProgress2).
-		    changeProgressBy(changeProgress).
-		    labelTheProgress
-		            ("Getting data for most recent billing date.").
-		    build() ;
-	    int currentBillMeterReading = 
-		    gdcBDLD.getStartRead() ;
-	    LocalDate currentBillDateUsed = gdcBDLD.getDate() ;
+	    SmartMeterTexasDataCollector gdcBDLD ;
+	    int currentBillMeterReading ;
+	    LocalDate currentBillDateUsed ;
+	    if (Setting.MOST_RECENT_BILL_READING_VALIDITY.
+		    equals(Setting.INVALID)) {
+		gdcBDLD = new SmartMeterTexasDataCollector.Builder().date(cBDLD)
+			.startProgressAt(startProgress2)
+			.changeProgressBy(changeProgress)
+			.labelTheProgress(
+				"Getting data for most recent billing date.")
+			.build();
+		currentBillMeterReading = gdcBDLD.getStartRead();
+		currentBillDateUsed = gdcBDLD.getDate();
+//		Setting.MOST_RECENT_BILL_READING_VALIDITY = Setting.VALID;
+//		CommonPreferences.set(
+//			gui.settingsMap
+//				.get(Setting.MOST_RECENT_BILL_DATE_READING),
+//			String.valueOf(currentBillMeterReading));
+//		CommonPreferences.set(
+//			gui.settingsMap
+//				.get(Setting.MOST_RECENT_BILL_READING_VALIDITY),
+//			Setting.VALID);
+	    } else { 
+            /* 
+             * Setting.MOST_RECENT_BILL_READING_VALIDITY.equals(Setting.VALID)
+            */
+		currentBillDateUsed = LocalDate.of(
+			Integer.parseInt(gui.store.get(Setting.
+				MOST_RECENT_BILL_DATE_YEAR)), 
+			Integer.parseInt(gui.store.get(Setting.
+				MOST_RECENT_BILL_DATE_MONTH)), 
+			Integer.parseInt(gui.store.get(Setting.
+				MOST_RECENT_BILL_DATE_DAY))
+			) ;
+		currentBillMeterReading = 
+			Integer.parseInt(gui.store.get(
+				Setting.
+				MOST_RECENT_BILL_DATE_READING)
+				) ;
+		/*
+		 * Next line removes a compiler warning.
+		 */
+		gdcBDLD = null ;
+	    }
 	    Predictor predictor = new Predictor.Builder().
 		    currentBillDate(currentBillDateUsed).
 		    currentBillMeterReading(currentBillMeterReading).
@@ -510,7 +543,10 @@ implements ActionListener {
 	    StringBuilder sb = new StringBuilder("\r\n") ;
 	    sb.append("Current Bill Date: ") ;
 	    sb.append(predictor.getDateBillCurrent()) ;
-	    if (gdcBDLD.isDateChanged()) {
+	    if (Setting.MOST_RECENT_BILL_READING_VALIDITY.
+		    equals(Setting.INVALID) && 
+		    (gdcBDLD != null) && 
+		    gdcBDLD.isDateChanged()) {
 		sb.append("     <<<<<<<<<<<<  CHANGED  >>>>>>>>>>>>") ;
 	    }
 	    sb.append("\r\n") ; 
