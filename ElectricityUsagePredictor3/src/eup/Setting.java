@@ -65,8 +65,8 @@ public class Setting {
 	    "mostRecentBillDateDay" ;
     public static final String MOST_RECENT_BILL_DATE_READING  = 
 	    "mostRecentBillDateReading" ;
-    public static String MOST_RECENT_BILL_READING_VALIDITY  = 
-	    INVALID ;
+    public static final String MOST_RECENT_BILL_READING_VALIDITY  = 
+	    "mostRecentBillReadingValidity" ;
     
     public static final String CURRENT_DATE_YEAR  = 
 	    "currentDateYear" ;
@@ -76,29 +76,15 @@ public class Setting {
 	    "currentDateDay" ;
     public static final String CURRENT_DATE_READING  = 
 	    "currentDateReading" ;
-    public static String CURRENT_READING_VALIDITY  = 
-	    INVALID ;
+    public static final String CURRENT_READING_VALIDITY  = 
+	    "currentReadingValidity" ;
     
-    public static final String NEXT_BILL_DATE_YEAR  = "nextBillDateYear" ;
+    public static final String NEXT_BILL_DATE_YEAR   = "nextBillDateYear" ;
     public static final String NEXT_BILL_DATE_MONTH  = "nextBillDateMonth" ;
-    public static final String NEXT_BILL_DATE_DAY  = "nextBillDateDay" ;
+    public static final String NEXT_BILL_DATE_DAY    = "nextBillDateDay" ;
     
     static {
 	List<Setting> settingsList = Util.makeArrayList(20);
-/*
- * 	settingsList.add(new Setting(PROXY_HOST));
-	settingsList.add(new Setting(PROXY_PORT).setDefaultValue("80"));
-	settingsList.add(new Setting(PROXY_ENABLE).setDefaultValue("false"));
-	settingsList.add(new Setting(PROXY_NOPROXYFOR));
-	for (int i = 0; i <= 15; i++) {
-	    String s = String
-		    .format(PERSONAL_TIME + "%1x", Integer.valueOf(i));
-	    settingsList.add(new Setting(s));
-	}
-	settingsList.add(new Setting(VIEW_COMPRESS_SCHEDULE_VIEW).
-		setDefaultValue("false"));
- *
- */
 	settingsList.add(new Setting(MOST_RECENT_BILL_DATE_YEAR, "2019")) ;
 	settingsList.add(new Setting(MOST_RECENT_BILL_DATE_MONTH,   "1")) ;
 	settingsList.add(new Setting(MOST_RECENT_BILL_DATE_DAY,     "9")) ;

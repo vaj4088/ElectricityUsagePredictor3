@@ -492,6 +492,7 @@ implements ActionListener {
 	    SmartMeterTexasDataCollector gdcBDLD ;
 	    int currentBillMeterReading ;
 	    LocalDate currentBillDateUsed ;
+	    boolean usedMostRecentBillReadingCache = false ;
 	    if (Setting.MOST_RECENT_BILL_READING_VALIDITY.
 		    equals(Setting.INVALID)) {
 		gdcBDLD = new SmartMeterTexasDataCollector.Builder().date(cBDLD)
@@ -502,15 +503,14 @@ implements ActionListener {
 			.build();
 		currentBillMeterReading = gdcBDLD.getStartRead();
 		currentBillDateUsed = gdcBDLD.getDate();
-//		Setting.MOST_RECENT_BILL_READING_VALIDITY = Setting.VALID;
-//		CommonPreferences.set(
-//			gui.settingsMap
-//				.get(Setting.MOST_RECENT_BILL_DATE_READING),
-//			String.valueOf(currentBillMeterReading));
-//		CommonPreferences.set(
-//			gui.settingsMap
-//				.get(Setting.MOST_RECENT_BILL_READING_VALIDITY),
-//			Setting.VALID);
+		CommonPreferences.set(
+			gui.settingsMap
+				.get(Setting.MOST_RECENT_BILL_DATE_READING),
+			String.valueOf(currentBillMeterReading));
+		CommonPreferences.set(
+			gui.settingsMap
+				.get(Setting.MOST_RECENT_BILL_READING_VALIDITY),
+			Setting.VALID);
 	    } else { 
             /* 
              * Setting.MOST_RECENT_BILL_READING_VALIDITY.equals(Setting.VALID)
@@ -528,6 +528,7 @@ implements ActionListener {
 				Setting.
 				MOST_RECENT_BILL_DATE_READING)
 				) ;
+		usedMostRecentBillReadingCache = true ;
 		/*
 		 * Next line removes a compiler warning.
 		 */
@@ -543,8 +544,7 @@ implements ActionListener {
 	    StringBuilder sb = new StringBuilder("\r\n") ;
 	    sb.append("Current Bill Date: ") ;
 	    sb.append(predictor.getDateBillCurrent()) ;
-	    if (Setting.MOST_RECENT_BILL_READING_VALIDITY.
-		    equals(Setting.INVALID) && 
+	    if (!usedMostRecentBillReadingCache && 
 		    (gdcBDLD != null) && 
 		    gdcBDLD.isDateChanged()) {
 		sb.append("     <<<<<<<<<<<<  CHANGED  >>>>>>>>>>>>") ;
@@ -553,6 +553,9 @@ implements ActionListener {
 	    sb.append("Current Bill Meter Reading: ") ;
 	    h = new Integer(predictor.getMeterReadingBillCurrent()) ;
 	    sb.append(h.intValue()) ;
+	    if (usedMostRecentBillReadingCache) {
+		sb.append("     <<<<<<<<<<<<  Cached Value Used  >>>>>>>>>>>>");
+	    }
 	    sb.append("\r\n\r\n") ;
 	    sb.append("Current Date: ");
 	    sb.append(predictor.getDateCurrent().toString()) ;
