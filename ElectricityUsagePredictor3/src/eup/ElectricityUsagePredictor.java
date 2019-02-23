@@ -582,9 +582,9 @@ implements ActionListener {
 		    (gdcBDLD != null) && 
 		    gdcBDLD.isDateChanged()) {
 		sb.append(
-			"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"+
-				"<<<<<<<<<<<<  CHANGED  >>>>>>>>>>>>"+
-				"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;") ;
+			" . . " +
+				"<<<<<<<<<<<<  CHANGED  >>>>>>>>>>>>"
+				) ;
 	    }
 	    sb.append("\r\n") ; 
 	    sb.append("Current Bill Meter Reading: ") ;
@@ -592,20 +592,20 @@ implements ActionListener {
 	    sb.append(h.intValue()) ;
 	    if (usedMostRecentBillReadingCache) {
 		sb.append(
-			"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"+
-				"<<<<<<<<<<<<  Cached Value Used  >>>>>>>>>>>>"+
-				"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;") ;
+			" . . " +
+				"<<<<<<<<<<<<  Cached Value Used  >>>>>>>>>>>>"
+				) ;
 	    }
 	    sb.append("\r\n\r\n") ;
 	    sb.append("Current Date: ");
 	    sb.append(predictor.getDateCurrent().toString()) ;
 	    if (gdcDLD.isDateChanged()) {
 		sb.append(
-			"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"+
+			" . . " +
 				"<<<<<<<<<<<< "+
 				"LATEST DATA AVAILABLE USED"+
-				" >>>>>>>>>>>>"+
-				"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;") ;
+				" >>>>>>>>>>>>"
+				) ;
 	    }
 	    sb.append("\r\n") ;
 	    sb.append("Current     Meter Reading : ");
@@ -638,7 +638,7 @@ implements ActionListener {
 	        @Override
 	        public void run() {
 	            System.out.println(sb) ;
-		    where.print("Predicted &nbsp;&nbsp;Usage : ") ;
+		    where.print("Predicted Usage : ") ;
 		    where.println(predictedUsage) ;
 //		    System.out.println(getFeedbacker()) ;
 	        }
