@@ -61,6 +61,8 @@ public class SmartMeterTexasDataCollector {
     private final Object lock = new Object() ;
 
     private static final String msgDown = "No results found.";
+    private static final String notResponding = 
+	    "Third-party server not responding." ;
     private static final String msgNoResource = 
 	    "The Access Manager WebSEAL server cannot find the resource " +
 		    "you have requested." ;
@@ -925,6 +927,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 		    nameValuePairs, null); // 114 POST- sets some cookies and
 	    // leads to 115 automatically.
 	}
+	checkThatServerIsUp(wp) ;
 	addressSuffix = extractAddressFromLogin(wp);
 	/*
 	 * Need to add getting a web page so that some cookies are set.
@@ -951,6 +954,26 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	 * 
 	 */
 	return wp ;
+    }
+
+    private void checkThatServerIsUp(WebPage wp) {
+	WPLocation wpl = wp.indexOf(notResponding) ;
+	if (badLocation(wpl)) return ;
+	/*
+	 * Here if server is down.
+	 */
+	String[] options = {"Exit"} ;
+	JOptionPane.showOptionDialog(
+		null,
+                notResponding.toUpperCase(),
+                notResponding,
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.ERROR_MESSAGE,
+                null,
+                options,
+                null
+                ) ;
+	System.exit(-404) ;
     }
 
     void getLatestEndMeterReadingAndUpdateCache(WebPage wp) {

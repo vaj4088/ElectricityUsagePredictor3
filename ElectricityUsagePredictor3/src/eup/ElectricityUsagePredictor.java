@@ -74,9 +74,9 @@ implements ActionListener {
     		<ElectricityUsagePredictor>() ;
     
     private CountDownLatch cdl ;
-    private Date cBD ;
-    private Date cD ;
-    private Date nBD ;
+    private volatile Date cBD ;
+    private volatile Date cD ;
+    private volatile Date nBD ;
     
 	/*
 	 * Used for getting stored billing date information.
@@ -189,7 +189,7 @@ implements ActionListener {
 	
 	//  Create three horizontal boxes, one above the other above the other.
 	//  The upper box will be used for date pickers and a button.
-	//  The middle bbox will have a progress indication.
+	//  The middle box will have a progress indication.
 	//  The bottom box will be used for the operations log.
 	//
 	//
@@ -446,15 +446,47 @@ implements ActionListener {
 	     * usage next time.
 	     */
 	    
-	    CommonPreferences.set(
-		    gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_YEAR), 
-		    String.valueOf(cBDLD.getYear())) ;
-	    CommonPreferences.set(
-		    gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_MONTH), 
-		    String.valueOf(cBDLD.getMonthValue())) ;
-	    CommonPreferences.set(
-		    gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_DAY), 
-		    String.valueOf(cBDLD.getDayOfMonth())) ;
+	    String cBDLDYear = String.valueOf(cBDLD.getYear()) ;
+	    String cBDLDMonth = String.valueOf(cBDLD.getMonthValue()) ;
+	    String cBDLDDay = String.valueOf(cBDLD.getDayOfMonth()) ;
+	    
+	    if (
+		    !(gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_YEAR).
+			    getDefaultValue().equals(cBDLDYear))
+		    ) {
+		CommonPreferences.set(
+			gui.settingsMap.
+			get(Setting.MOST_RECENT_BILL_DATE_YEAR), 
+			cBDLDYear) ;
+		CommonPreferences.set(
+			gui.settingsMap.
+			get(Setting.MOST_RECENT_BILL_READING_VALIDITY),
+			Setting.INVALID) ;
+	    }
+	    if (
+		    !(gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_MONTH).
+			    getDefaultValue().equals(cBDLDMonth))
+		    ) {
+		CommonPreferences.set(
+			gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_MONTH), 
+			cBDLDMonth) ;
+		CommonPreferences.set(
+			gui.settingsMap.
+			get(Setting.MOST_RECENT_BILL_READING_VALIDITY),
+			Setting.INVALID) ;
+	    }
+	    if (
+		    !(gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_DAY).
+			    getDefaultValue().equals(cBDLDDay))
+		    ) {
+		CommonPreferences.set(
+			gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_DAY), 
+			cBDLDDay) ;
+		CommonPreferences.set(
+			gui.settingsMap.
+			get(Setting.MOST_RECENT_BILL_READING_VALIDITY),
+			Setting.INVALID) ;
+	    }
 	    /*
 	     * bd is Next Billing Date nBd, converted from Date to LocalDate.
 	     */
@@ -493,8 +525,9 @@ implements ActionListener {
 	    int currentBillMeterReading ;
 	    LocalDate currentBillDateUsed ;
 	    boolean usedMostRecentBillReadingCache = false ;
-	    if (Setting.MOST_RECENT_BILL_READING_VALIDITY.
-		    equals(Setting.INVALID)) {
+	    if (
+            (Setting.MOST_RECENT_BILL_READING_VALIDITY.equals(Setting.INVALID))
+	      ) {
 		gdcBDLD = new SmartMeterTexasDataCollector.Builder().date(cBDLD)
 			.startProgressAt(startProgress2)
 			.changeProgressBy(changeProgress)
@@ -514,6 +547,7 @@ implements ActionListener {
 	    } else { 
             /* 
              * Setting.MOST_RECENT_BILL_READING_VALIDITY.equals(Setting.VALID)
+             * and right year and right month and right day of month
             */
 		currentBillDateUsed = LocalDate.of(
 			Integer.parseInt(gui.store.get(Setting.
@@ -547,21 +581,31 @@ implements ActionListener {
 	    if (!usedMostRecentBillReadingCache && 
 		    (gdcBDLD != null) && 
 		    gdcBDLD.isDateChanged()) {
-		sb.append("     <<<<<<<<<<<<  CHANGED  >>>>>>>>>>>>") ;
+		sb.append(
+			"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"+
+				"<<<<<<<<<<<<  CHANGED  >>>>>>>>>>>>"+
+				"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;") ;
 	    }
 	    sb.append("\r\n") ; 
 	    sb.append("Current Bill Meter Reading: ") ;
 	    h = new Integer(predictor.getMeterReadingBillCurrent()) ;
 	    sb.append(h.intValue()) ;
 	    if (usedMostRecentBillReadingCache) {
-		sb.append("     <<<<<<<<<<<<  Cached Value Used  >>>>>>>>>>>>");
+		sb.append(
+			"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"+
+				"<<<<<<<<<<<<  Cached Value Used  >>>>>>>>>>>>"+
+				"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;") ;
 	    }
 	    sb.append("\r\n\r\n") ;
 	    sb.append("Current Date: ");
 	    sb.append(predictor.getDateCurrent().toString()) ;
 	    if (gdcDLD.isDateChanged()) {
-		sb.append(" <<<<<<<<<<<< LATEST DATA " + 
-	                   "AVAILABLE USED >>>>>>>>>>>>") ;
+		sb.append(
+			"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"+
+				"<<<<<<<<<<<< "+
+				"LATEST DATA AVAILABLE USED"+
+				" >>>>>>>>>>>>"+
+				"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;") ;
 	    }
 	    sb.append("\r\n") ;
 	    sb.append("Current     Meter Reading : ");
@@ -594,7 +638,7 @@ implements ActionListener {
 	        @Override
 	        public void run() {
 	            System.out.println(sb) ;
-		    where.print("Predicted   Usage : ") ;
+		    where.print("Predicted &nbsp;&nbsp;Usage : ") ;
 		    where.println(predictedUsage) ;
 //		    System.out.println(getFeedbacker()) ;
 	        }
