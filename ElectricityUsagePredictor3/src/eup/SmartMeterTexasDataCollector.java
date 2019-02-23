@@ -963,6 +963,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	 * Here if server is down.
 	 */
 	String[] options = {"Exit"} ;
+	System.err.println("Error: " + notResponding) ;
 	JOptionPane.showOptionDialog(
 		null,
                 notResponding.toUpperCase(),
