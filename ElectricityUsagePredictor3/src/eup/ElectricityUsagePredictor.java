@@ -407,7 +407,7 @@ implements ActionListener {
 	}
 	while (true) {
 	    ElectricityUsagePredictor gui = guiAtomicReference.get() ;
-	    gui.fb.progressAnnounce(false) ;
+	    gui.fb.progressAnnounce(false, "Waiting for GO (predict)") ;
 	    gui.cdl = new CountDownLatch(1) ;
 	    try {
 		//
@@ -428,7 +428,7 @@ implements ActionListener {
 		    startProgress1+changeProgress
 		    ) ;
 	    //
-	    // cBDLD is current current Bill Date as a Local Date
+	    // cBDLD is current Bill Date as a Local Date
 	    //
 	    LocalDate cBDLD = gui.cBD.toInstant().
 		    atZone(ZoneId.systemDefault()).
@@ -441,73 +441,43 @@ implements ActionListener {
 		    toLocalDate() ;
 	    
 	    /*
-	     * Store the year, month and day of the billing dates
-	     * as the user has selected them, to be available for
-	     * usage next time.
+	     * nBDLD is next Bill Date as a LocalDate.
 	     */
-	    
-	    String cBDLDYear = String.valueOf(cBDLD.getYear()) ;
-	    String cBDLDMonth = String.valueOf(cBDLD.getMonthValue()) ;
-	    String cBDLDDay = String.valueOf(cBDLD.getDayOfMonth()) ;
-	    
-	    if (
-		    !(gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_YEAR).
-			    getDefaultValue().equals(cBDLDYear))
-		    ) {
-		CommonPreferences.set(
-			gui.settingsMap.
-			get(Setting.MOST_RECENT_BILL_DATE_YEAR), 
-			cBDLDYear) ;
-		CommonPreferences.set(
-			gui.settingsMap.
-			get(Setting.MOST_RECENT_BILL_READING_VALIDITY),
-			Setting.INVALID) ;
-	    }
-	    if (
-		    !(gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_MONTH).
-			    getDefaultValue().equals(cBDLDMonth))
-		    ) {
-		CommonPreferences.set(
-			gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_MONTH), 
-			cBDLDMonth) ;
-		CommonPreferences.set(
-			gui.settingsMap.
-			get(Setting.MOST_RECENT_BILL_READING_VALIDITY),
-			Setting.INVALID) ;
-	    }
-	    if (
-		    !(gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_DAY).
-			    getDefaultValue().equals(cBDLDDay))
-		    ) {
-		CommonPreferences.set(
-			gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_DAY), 
-			cBDLDDay) ;
-		CommonPreferences.set(
-			gui.settingsMap.
-			get(Setting.MOST_RECENT_BILL_READING_VALIDITY),
-			Setting.INVALID) ;
-	    }
-	    /*
-	     * bd is Next Billing Date nBd, converted from Date to LocalDate.
-	     */
-	    LocalDate bd = gui.nBD.toInstant().
+	    LocalDate nBDLD = gui.nBD.toInstant().
 		    atZone(ZoneId.systemDefault()).toLocalDate() ;
 	    
-	    CommonPreferences.set(
-		    gui.settingsMap.get(Setting.NEXT_BILL_DATE_YEAR), 
-		    String.valueOf(bd.getYear())) ;
-	    CommonPreferences.set(
-		    gui.settingsMap.get(Setting.NEXT_BILL_DATE_MONTH), 
-		    String.valueOf(bd.getMonthValue())) ;
-	    CommonPreferences.set(
-		    gui.settingsMap.get(Setting.NEXT_BILL_DATE_DAY), 
-		    String.valueOf(bd.getDayOfMonth())) ;
-
 	    /*
-	     * End of storing year, month and day of the billing dates.
+	     *  Store current billing date for future use.
+	     */
+	    CommonPreferences.set(
+		    gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_YEAR), 
+		    String.valueOf(cBDLD.getYear())) ;
+	    CommonPreferences.set(
+		    gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_MONTH), 
+		    String.valueOf(cBDLD.getMonthValue())) ;
+	    CommonPreferences.set(
+		    gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_DAY), 
+		    String.valueOf(cBDLD.getDayOfMonth())) ;
+	    /*
+	     * End of storing year, month and day of the current billing date.
 	     */
 	    
-//	    gui.fb.progressAnnounce(true, "Getting data for current date.") ;
+	    /*
+	     *  Store next billing date for future use.
+	     */
+	    CommonPreferences.set(
+		    gui.settingsMap.get(Setting.NEXT_BILL_DATE_YEAR), 
+		    String.valueOf(nBDLD.getYear())) ;
+	    CommonPreferences.set(
+		    gui.settingsMap.get(Setting.NEXT_BILL_DATE_MONTH), 
+		    String.valueOf(nBDLD.getMonthValue())) ;
+	    CommonPreferences.set(
+		    gui.settingsMap.get(Setting.NEXT_BILL_DATE_DAY), 
+		    String.valueOf(nBDLD.getDayOfMonth())) ;
+	    /*
+	     * End of storing year, month and day of the next billing date.
+	     */
+	    
 	    SmartMeterTexasDataCollector gdcDLD = 
 		    new SmartMeterTexasDataCollector.Builder().
 		    date(cDLD).
@@ -519,67 +489,33 @@ implements ActionListener {
 	    int currentMeterReading     = 
 		    gdcDLD.getStartRead() ;
 	    LocalDate currentDateUsed = gdcDLD.getDate() ;
-//	    gui.fb.progressAnnounce(true,
-//		    "Getting data for most recent billing date.") ;
 	    SmartMeterTexasDataCollector gdcBDLD ;
 	    int currentBillMeterReading ;
 	    LocalDate currentBillDateUsed ;
 	    boolean usedMostRecentBillReadingCache = false ;
-	    if (
-            (Setting.MOST_RECENT_BILL_READING_VALIDITY.equals(Setting.INVALID))
-	      ) {
-		gdcBDLD = new SmartMeterTexasDataCollector.Builder().date(cBDLD)
-			.startProgressAt(startProgress2)
-			.changeProgressBy(changeProgress)
-			.labelTheProgress(
-				"Getting data for most recent billing date.")
-			.build();
-		currentBillMeterReading = gdcBDLD.getStartRead();
-		currentBillDateUsed = gdcBDLD.getDate();
-		CommonPreferences.set(
-			gui.settingsMap
-				.get(Setting.MOST_RECENT_BILL_DATE_READING),
-			String.valueOf(currentBillMeterReading));
-		CommonPreferences.set(
-			gui.settingsMap
-				.get(Setting.MOST_RECENT_BILL_READING_VALIDITY),
-			Setting.VALID);
-	    } else { 
-            /* 
-             * Setting.MOST_RECENT_BILL_READING_VALIDITY.equals(Setting.VALID)
-             * and right year and right month and right day of month
-            */
-		currentBillDateUsed = LocalDate.of(
-			Integer.parseInt(gui.store.get(Setting.
-				MOST_RECENT_BILL_DATE_YEAR)), 
-			Integer.parseInt(gui.store.get(Setting.
-				MOST_RECENT_BILL_DATE_MONTH)), 
-			Integer.parseInt(gui.store.get(Setting.
-				MOST_RECENT_BILL_DATE_DAY))
-			) ;
-		currentBillMeterReading = 
-			Integer.parseInt(gui.store.get(
-				Setting.
-				MOST_RECENT_BILL_DATE_READING)
-				) ;
-		usedMostRecentBillReadingCache = true ;
-		/*
-		 * Next line removes a compiler warning.
-		 */
-		gdcBDLD = null ;
-	    }
+	    gdcBDLD = new SmartMeterTexasDataCollector.Builder().date(cBDLD)
+		    .startProgressAt(startProgress2)
+		    .changeProgressBy(changeProgress)
+		    .labelTheProgress(
+			    "Getting data for most recent billing date.")
+		    .build();
+	    currentBillMeterReading = gdcBDLD.getStartRead();
+	    currentBillDateUsed = gdcBDLD.getDate();
+//	    CommonPreferences.set(
+//		    gui.settingsMap
+//		    .get(Setting.MOST_RECENT_BILL_DATE_READING),
+//		    String.valueOf(currentBillMeterReading));
 	    Predictor predictor = new Predictor.Builder().
 		    currentBillDate(currentBillDateUsed).
 		    currentBillMeterReading(currentBillMeterReading).
 		    currentDate(currentDateUsed).
 		    currentMeterReading(currentMeterReading).
-		    nextBillDate(bd).
+		    nextBillDate(nBDLD).
 		    build();
 	    StringBuilder sb = new StringBuilder("\r\n") ;
 	    sb.append("Current Bill Date: ") ;
 	    sb.append(predictor.getDateBillCurrent()) ;
 	    if (!usedMostRecentBillReadingCache && 
-		    (gdcBDLD != null) && 
 		    gdcBDLD.isDateChanged()) {
 		sb.append(
 			" . . " +
@@ -747,6 +683,68 @@ implements ActionListener {
 	    }
 	    
 	});
+    }
+    
+    boolean canUseCachedValue(
+	    final Map<String, Setting> storedSettings,
+	    final String storedNameYear,
+	    final String storedNameMonth,
+	    final String storedNameDay,
+	    final String storedNameValidity,
+	    final LocalDate lD
+	    ) {
+	boolean result ;
+
+	String lDYear = String.valueOf(lD.getYear()) ;
+	String lDMonth = String.valueOf(lD.getMonthValue()) ;
+	String lDDay = String.valueOf(lD.getDayOfMonth()) ;
+	
+	String storedYear = 
+		storedSettings.
+		get(storedNameYear).
+		getDefaultValue() ;
+	String storedMonth = 
+		storedSettings.
+		get(storedNameMonth).
+		getDefaultValue() ;
+	String storedDay = 
+		storedSettings.
+		get(storedNameDay).
+		getDefaultValue() ;
+	String storedValidity =
+		storedSettings.
+		get(storedNameValidity).
+		getDefaultValue() ;
+	
+	if (
+		storedValidity.equals(Setting.VALID) &&
+		storedYear.equals(lDYear) &&
+		storedMonth.equals(lDMonth) &&
+		storedDay.equals(lDDay)
+	   ) 
+	{
+	    result = true ;
+	} else {  //  Need to update the cache.
+	    CommonPreferences.set(
+		    storedSettings.
+		    get(storedNameYear), 
+		    String.valueOf(lD.getYear())) ;
+	    CommonPreferences.set(
+		    storedSettings.
+		    get(storedNameMonth), 
+		    String.valueOf(lD.getMonthValue())) ;
+	    CommonPreferences.set(
+		    storedSettings.
+		    get(storedNameDay), 
+		    String.valueOf(lD.getDayOfMonth())) ;
+	    CommonPreferences.set(
+		    storedSettings.
+		    get(storedNameValidity), 
+		    Setting.VALID) ;
+	    
+	    result = false ;
+	}
+	return result ;
     }
     
     class DateLabelFormatter extends AbstractFormatter {
