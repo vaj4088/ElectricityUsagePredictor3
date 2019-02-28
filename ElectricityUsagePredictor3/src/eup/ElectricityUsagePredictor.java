@@ -477,21 +477,41 @@ implements ActionListener {
 	    /*
 	     * End of storing year, month and day of the next billing date.
 	     */
+
+	    int currentMeterReading ;
+	    LocalDate currentDateUsed ;
+	    SmartMeterTexasDataCollector gdcDLD = null;
+	    if (canUseCachedValue(
+		    gui.settingsMap,
+		    Setting.CURRENT_DATE_YEAR,
+		    Setting.CURRENT_DATE_MONTH,
+		    Setting.CURRENT_DATE_DAY,
+		    cDLD
+		    )) {
+		currentMeterReading = 		
+			Integer.parseInt(
+				gui.settingsMap.
+				get(Setting.CURRENT_DATE_READING).
+				getDefaultValue()
+				) ;
+		currentDateUsed = cDLD ;
+	    } else {
+		gdcDLD = 
+			new SmartMeterTexasDataCollector.Builder().
+			date(cDLD).
+			startProgressAt(startProgress1).
+			changeProgressBy(changeProgress).
+			labelTheProgress("Getting data for current date.").
+			build() ;
+		gdcDLD.setFeedbacker(gui.fb) ;
+		currentMeterReading     = 
+			gdcDLD.getStartRead() ;
+		currentDateUsed = gdcDLD.getDate() ;
+	    }
 	    
-	    SmartMeterTexasDataCollector gdcDLD = 
-		    new SmartMeterTexasDataCollector.Builder().
-		    date(cDLD).
-		    startProgressAt(startProgress1).
-		    changeProgressBy(changeProgress).
-		    labelTheProgress("Getting data for current date.").
-		    build() ;
-	    gdcDLD.setFeedbacker(gui.fb) ;
-	    int currentMeterReading     = 
-		    gdcDLD.getStartRead() ;
-	    LocalDate currentDateUsed = gdcDLD.getDate() ;
-	    SmartMeterTexasDataCollector gdcBDLD ;
 	    int currentBillMeterReading ;
 	    LocalDate currentBillDateUsed ;
+	    SmartMeterTexasDataCollector gdcBDLD ;
 	    boolean usedMostRecentBillReadingCache = false ;
 	    gdcBDLD = new SmartMeterTexasDataCollector.Builder().date(cBDLD)
 		    .startProgressAt(startProgress2)
@@ -512,13 +532,17 @@ implements ActionListener {
 		    currentMeterReading(currentMeterReading).
 		    nextBillDate(nBDLD).
 		    build();
+	    String nonbreakingSpace = "\u00A0" ;
+	    String fiveNonBreakingSpaces = nonbreakingSpace + 
+		    nonbreakingSpace + nonbreakingSpace + 
+		    nonbreakingSpace + nonbreakingSpace ;
 	    StringBuilder sb = new StringBuilder("\r\n") ;
 	    sb.append("Current Bill Date: ") ;
 	    sb.append(predictor.getDateBillCurrent()) ;
 	    if (!usedMostRecentBillReadingCache && 
 		    gdcBDLD.isDateChanged()) {
 		sb.append(
-			" . . " +
+			fiveNonBreakingSpaces +
 				"<<<<<<<<<<<<  CHANGED  >>>>>>>>>>>>"
 				) ;
 	    }
@@ -528,16 +552,16 @@ implements ActionListener {
 	    sb.append(h.intValue()) ;
 	    if (usedMostRecentBillReadingCache) {
 		sb.append(
-			" . . " +
+			fiveNonBreakingSpaces +
 				"<<<<<<<<<<<<  Cached Value Used  >>>>>>>>>>>>"
 				) ;
 	    }
 	    sb.append("\r\n\r\n") ;
 	    sb.append("Current Date: ");
 	    sb.append(predictor.getDateCurrent().toString()) ;
-	    if (gdcDLD.isDateChanged()) {
+	    if (!(gdcDLD == null) && gdcDLD.isDateChanged()) {
 		sb.append(
-			" . . " +
+			fiveNonBreakingSpaces +
 				"<<<<<<<<<<<< "+
 				"LATEST DATA AVAILABLE USED"+
 				" >>>>>>>>>>>>"
@@ -685,12 +709,11 @@ implements ActionListener {
 	});
     }
     
-    boolean canUseCachedValue(
-	    final Map<String, Setting> storedSettings,
+    private static boolean canUseCachedValue(
+	    final Map<? extends String, ? extends Setting> settingsMap2,
 	    final String storedNameYear,
 	    final String storedNameMonth,
 	    final String storedNameDay,
-	    final String storedNameValidity,
 	    final LocalDate lD
 	    ) {
 	boolean result ;
@@ -700,47 +723,38 @@ implements ActionListener {
 	String lDDay = String.valueOf(lD.getDayOfMonth()) ;
 	
 	String storedYear = 
-		storedSettings.
+		settingsMap2.
 		get(storedNameYear).
 		getDefaultValue() ;
 	String storedMonth = 
-		storedSettings.
+		settingsMap2.
 		get(storedNameMonth).
 		getDefaultValue() ;
 	String storedDay = 
-		storedSettings.
+		settingsMap2.
 		get(storedNameDay).
-		getDefaultValue() ;
-	String storedValidity =
-		storedSettings.
-		get(storedNameValidity).
 		getDefaultValue() ;
 	
 	if (
-		storedValidity.equals(Setting.VALID) &&
 		storedYear.equals(lDYear) &&
 		storedMonth.equals(lDMonth) &&
 		storedDay.equals(lDDay)
-	   ) 
+		) 
 	{
 	    result = true ;
 	} else {  //  Need to update the cache.
 	    CommonPreferences.set(
-		    storedSettings.
+		    settingsMap2.
 		    get(storedNameYear), 
 		    String.valueOf(lD.getYear())) ;
 	    CommonPreferences.set(
-		    storedSettings.
+		    settingsMap2.
 		    get(storedNameMonth), 
 		    String.valueOf(lD.getMonthValue())) ;
 	    CommonPreferences.set(
-		    storedSettings.
+		    settingsMap2.
 		    get(storedNameDay), 
 		    String.valueOf(lD.getDayOfMonth())) ;
-	    CommonPreferences.set(
-		    storedSettings.
-		    get(storedNameValidity), 
-		    Setting.VALID) ;
 	    
 	    result = false ;
 	}
