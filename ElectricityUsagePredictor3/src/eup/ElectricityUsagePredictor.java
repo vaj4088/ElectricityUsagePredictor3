@@ -478,9 +478,13 @@ implements ActionListener {
 	     * End of storing year, month and day of the next billing date.
 	     */
 
+	    /*
+	     * Get data for the current date meter reading.
+	     */
 	    int currentMeterReading ;
 	    LocalDate currentDateUsed ;
 	    SmartMeterTexasDataCollector gdcDLD = null;
+	    boolean usedCurrentDateReadingCache = false ;
 	    if (canUseCachedValue(
 		    gui.settingsMap,
 		    Setting.CURRENT_DATE_YEAR,
@@ -508,7 +512,14 @@ implements ActionListener {
 			gdcDLD.getStartRead() ;
 		currentDateUsed = gdcDLD.getDate() ;
 	    }
+	    /*
+	     * End of
+	     * get data for the current date meter reading.
+	     */
 	    
+	    /*
+	     * Get data for the current bill date meter reading.
+	     */
 	    int currentBillMeterReading ;
 	    LocalDate currentBillDateUsed ;
 	    SmartMeterTexasDataCollector gdcBDLD ;
@@ -521,6 +532,10 @@ implements ActionListener {
 		    .build();
 	    currentBillMeterReading = gdcBDLD.getStartRead();
 	    currentBillDateUsed = gdcBDLD.getDate();
+	    /*
+	     * End of
+	     * get data for the current bill date meter reading.
+	     */
 //	    CommonPreferences.set(
 //		    gui.settingsMap
 //		    .get(Setting.MOST_RECENT_BILL_DATE_READING),
