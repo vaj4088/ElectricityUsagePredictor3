@@ -499,6 +499,7 @@ implements ActionListener {
 				getDefaultValue()
 				) ;
 		currentDateUsed = cDLD ;
+		usedCurrentDateReadingCache = true ;
 	    } else {
 		gdcDLD = 
 			new SmartMeterTexasDataCollector.Builder().
@@ -511,6 +512,7 @@ implements ActionListener {
 		currentMeterReading     = 
 			gdcDLD.getStartRead() ;
 		currentDateUsed = gdcDLD.getDate() ;
+		usedCurrentDateReadingCache = false ;
 	    }
 	    /*
 	     * End of
@@ -522,24 +524,42 @@ implements ActionListener {
 	     */
 	    int currentBillMeterReading ;
 	    LocalDate currentBillDateUsed ;
-	    SmartMeterTexasDataCollector gdcBDLD ;
+	    SmartMeterTexasDataCollector gdcBDLD = null ;
 	    boolean usedMostRecentBillReadingCache = false ;
-	    gdcBDLD = new SmartMeterTexasDataCollector.Builder().date(cBDLD)
-		    .startProgressAt(startProgress2)
-		    .changeProgressBy(changeProgress)
-		    .labelTheProgress(
-			    "Getting data for most recent billing date.")
-		    .build();
-	    currentBillMeterReading = gdcBDLD.getStartRead();
-	    currentBillDateUsed = gdcBDLD.getDate();
+	    if (canUseCachedValue(
+		    gui.settingsMap,
+		    Setting.MOST_RECENT_BILL_DATE_YEAR,
+		    Setting.MOST_RECENT_BILL_DATE_MONTH,
+		    Setting.MOST_RECENT_BILL_DATE_DAY,
+		    cBDLD
+		    )) {
+		currentBillMeterReading = 
+			Integer.parseInt(
+				gui.settingsMap.
+				get(Setting.MOST_RECENT_BILL_DATE_READING).
+				getDefaultValue()
+				) ;
+		currentBillDateUsed = cBDLD ;
+		usedMostRecentBillReadingCache = true ;
+	    } else {
+		    gdcBDLD = new SmartMeterTexasDataCollector.Builder()
+			    .date(cBDLD)
+			    .startProgressAt(startProgress2)
+			    .changeProgressBy(changeProgress)
+			    .labelTheProgress(
+				    "Getting data for most " +
+				    "recent billing date.")
+			    .build();
+		    gdcBDLD.setFeedbacker(gui.fb) ;
+		    currentBillMeterReading = gdcBDLD.getStartRead();
+		    currentBillDateUsed = gdcBDLD.getDate();
+		    usedMostRecentBillReadingCache = false ;
+	    }
 	    /*
 	     * End of
 	     * get data for the current bill date meter reading.
 	     */
-//	    CommonPreferences.set(
-//		    gui.settingsMap
-//		    .get(Setting.MOST_RECENT_BILL_DATE_READING),
-//		    String.valueOf(currentBillMeterReading));
+
 	    Predictor predictor = new Predictor.Builder().
 		    currentBillDate(currentBillDateUsed).
 		    currentBillMeterReading(currentBillMeterReading).
@@ -554,7 +574,7 @@ implements ActionListener {
 	    StringBuilder sb = new StringBuilder("\r\n") ;
 	    sb.append("Current Bill Date: ") ;
 	    sb.append(predictor.getDateBillCurrent()) ;
-	    if (!usedMostRecentBillReadingCache && 
+	    if ((gdcBDLD != null) && 
 		    gdcBDLD.isDateChanged()) {
 		sb.append(
 			fiveNonBreakingSpaces +
@@ -568,13 +588,14 @@ implements ActionListener {
 	    if (usedMostRecentBillReadingCache) {
 		sb.append(
 			fiveNonBreakingSpaces +
-				"<<<<<<<<<<<<  Cached Value Used  >>>>>>>>>>>>"
-				) ;
+			"<<<<<<<<<<<<  Cached Value Used  >>>>>>>>>>>>"
+			) ;
 	    }
 	    sb.append("\r\n\r\n") ;
 	    sb.append("Current Date: ");
 	    sb.append(predictor.getDateCurrent().toString()) ;
-	    if (!(gdcDLD == null) && gdcDLD.isDateChanged()) {
+	    if ((gdcDLD != null) && 
+		    gdcDLD.isDateChanged()) {
 		sb.append(
 			fiveNonBreakingSpaces +
 				"<<<<<<<<<<<< "+
@@ -583,9 +604,19 @@ implements ActionListener {
 				) ;
 	    }
 	    sb.append("\r\n") ;
-	    sb.append("Current     Meter Reading : ");
+	    sb.append(
+		    "Current" +
+			    fiveNonBreakingSpaces +
+			    "Meter Reading : "
+		    ) ;
 	    h = new Integer(predictor.getMeterReadingCurrent()) ;
 	    sb.append(h.intValue()) ;
+	    if (usedCurrentDateReadingCache) {
+		sb.append(
+			fiveNonBreakingSpaces +
+			"<<<<<<<<<<<<  Cached Value Used  >>>>>>>>>>>>"
+			) ;
+	    }
 	    sb.append("\r\n\r\n") ;
 	    sb.append("Next    Bill Date   : ");
 	    sb.append(predictor.getDateBillNext().toString()) ;
