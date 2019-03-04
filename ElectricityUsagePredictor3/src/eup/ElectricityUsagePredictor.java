@@ -336,40 +336,6 @@ implements ActionListener {
     }
 
     /**
-     * To be called from the EDT.
-     */
-//    static Feedbacker getFeedbacker() {
-//	for (Frame f : Frame.getFrames()) {
-//	    System.out.println("Frame: " + f);
-//	    if (f instanceof JFrame) {
-//		return ((ElectricityUsagePredictor)f).fb ;
-//		Container c = ((JFrame) f).getContentPane();
-//		System.out.println("__Content Pane: " + c);
-//		getFeedbackerHelper(c, 4) ;
-//	    }
-//	}
-//	return null ;  //  Should not get here.  Avoids a compiler warning.
-//    }
-
-    /**
-     * To be called from the EDT.
-     */
-//    static void getFeedbackerHelper(Container c, int indent) {
-//	for (Component comp : c.getComponents()) {
-//	    if (comp instanceof javax.swing.JProgressBar) {
-//		for (int i=0; i<indent; i++) {
-//		    System.out.print('_'); 
-//		}
-//		System.out.println("Container " + c + " contains: " + comp) ;
-//	    }
-//	    if (comp instanceof Container) {
-//		int nextIndent = indent + 2 ;
-//		getFeedbackerHelper((Container)comp, nextIndent) ; // Recursion!
-//	    }
-//	}
-//    }
-
-    /**
      * @param args
      */
     public static void main(String[] args) {
@@ -494,10 +460,10 @@ implements ActionListener {
 		    )) {
 		currentMeterReading = 		
 			Integer.parseInt(
+				CommonPreferences.get(
 				gui.settingsMap.
-				get(Setting.CURRENT_DATE_READING).
-				getDefaultValue()
-				) ;
+				get(Setting.CURRENT_DATE_READING)
+				)) ;
 		currentDateUsed = cDLD ;
 		usedCurrentDateReadingCache = true ;
 	    } else {
@@ -511,6 +477,16 @@ implements ActionListener {
 		gdcDLD.setFeedbacker(gui.fb) ;
 		currentMeterReading     = 
 			gdcDLD.getStartRead() ;
+		CommonPreferences.set(
+			gui.settingsMap.
+			get(Setting.CURRENT_DATE_READING),
+			Integer.toString(currentMeterReading)
+			) ;
+		CommonPreferences.set(
+			gui.settingsMap.
+			get(Setting.CURRENT_READING_VALIDITY),
+			Setting.VALID
+			) ;
 		currentDateUsed = gdcDLD.getDate() ;
 		usedCurrentDateReadingCache = false ;
 	    }
@@ -535,10 +511,10 @@ implements ActionListener {
 		    )) {
 		currentBillMeterReading = 
 			Integer.parseInt(
+				CommonPreferences.get(
 				gui.settingsMap.
-				get(Setting.MOST_RECENT_BILL_DATE_READING).
-				getDefaultValue()
-				) ;
+				get(Setting.MOST_RECENT_BILL_DATE_READING)
+				)) ;
 		currentBillDateUsed = cBDLD ;
 		usedMostRecentBillReadingCache = true ;
 	    } else {
@@ -552,6 +528,16 @@ implements ActionListener {
 			    .build();
 		    gdcBDLD.setFeedbacker(gui.fb) ;
 		    currentBillMeterReading = gdcBDLD.getStartRead();
+			CommonPreferences.set(
+				gui.settingsMap.
+				get(Setting.MOST_RECENT_BILL_DATE_READING),
+				Integer.toString(currentBillMeterReading)
+				) ;
+			CommonPreferences.set(
+				gui.settingsMap.
+				get(Setting.MOST_RECENT_BILL_READING_VALIDITY),
+				Setting.VALID
+				) ;
 		    currentBillDateUsed = gdcBDLD.getDate();
 		    usedMostRecentBillReadingCache = false ;
 	    }
@@ -606,8 +592,10 @@ implements ActionListener {
 	    sb.append("\r\n") ;
 	    sb.append(
 		    "Current" +
-			    fiveNonBreakingSpaces +
-			    "Meter Reading : "
+			    fiveNonBreakingSpaces + 
+			    nonbreakingSpace + 
+			    nonbreakingSpace + 
+			    "Meter Reading: "
 		    ) ;
 	    h = new Integer(predictor.getMeterReadingCurrent()) ;
 	    sb.append(h.intValue()) ;
@@ -768,19 +756,22 @@ implements ActionListener {
 	String lDMonth = String.valueOf(lD.getMonthValue()) ;
 	String lDDay = String.valueOf(lD.getDayOfMonth()) ;
 	
-	String storedYear = 
-		settingsMap2.
-		get(storedNameYear).
-		getDefaultValue() ;
+	String storedYear =
+		CommonPreferences.get(
+			settingsMap2.
+			get(storedNameYear)
+			) ;
 	String storedMonth = 
-		settingsMap2.
-		get(storedNameMonth).
-		getDefaultValue() ;
+		CommonPreferences.get(
+			settingsMap2.
+			get(storedNameMonth)
+			) ;
 	String storedDay = 
-		settingsMap2.
-		get(storedNameDay).
-		getDefaultValue() ;
-	
+		CommonPreferences.get(
+			settingsMap2.
+			get(storedNameDay)
+			) ;
+
 	if (
 		storedYear.equals(lDYear) &&
 		storedMonth.equals(lDMonth) &&
@@ -792,15 +783,15 @@ implements ActionListener {
 	    CommonPreferences.set(
 		    settingsMap2.
 		    get(storedNameYear), 
-		    String.valueOf(lD.getYear())) ;
+		    lDYear) ;
 	    CommonPreferences.set(
 		    settingsMap2.
 		    get(storedNameMonth), 
-		    String.valueOf(lD.getMonthValue())) ;
+		    lDMonth) ;
 	    CommonPreferences.set(
 		    settingsMap2.
 		    get(storedNameDay), 
-		    String.valueOf(lD.getDayOfMonth())) ;
+		    lDDay) ;
 	    
 	    result = false ;
 	}
