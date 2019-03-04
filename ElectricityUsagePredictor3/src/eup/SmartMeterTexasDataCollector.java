@@ -63,6 +63,8 @@ public class SmartMeterTexasDataCollector {
     private static final String msgDown = "No results found.";
     private static final String notResponding = 
 	    "Third-party server not responding." ;
+    private static final String gatewayTimeout =
+	    "Gateway Timeout" ;
     private static final String msgNoResource = 
 	    "The Access Manager WebSEAL server cannot find the resource " +
 		    "you have requested." ;
@@ -928,6 +930,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    // leads to 115 automatically.
 	}
 	checkThatServerIsUp(wp) ;
+	checkforGatewayTimeout(wp) ;
 	addressSuffix = extractAddressFromLogin(wp);
 	/*
 	 * Need to add getting a web page so that some cookies are set.
@@ -975,6 +978,27 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
                 null
                 ) ;
 	System.exit(-404) ;
+    }
+
+    private void checkforGatewayTimeout(WebPage wp) {
+	WPLocation wpl = wp.indexOf(gatewayTimeout) ;
+	if (badLocation(wpl)) return ;
+	/*
+	 * Here if gateway has timeout.
+	 */
+	String[] options = {"Exit"} ;
+	System.err.println("Error: " + gatewayTimeout) ;
+	JOptionPane.showOptionDialog(
+		null,
+                notResponding.toUpperCase(),
+                notResponding,
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.ERROR_MESSAGE,
+                null,
+                options,
+                null
+                ) ;
+	System.exit(-405) ;
     }
 
     void getLatestEndMeterReadingAndUpdateCache(WebPage wp) {
