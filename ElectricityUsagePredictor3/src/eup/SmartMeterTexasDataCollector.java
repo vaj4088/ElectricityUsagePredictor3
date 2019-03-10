@@ -902,10 +902,6 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	//
 	// <><><><><>  Get a web page  <><><><><><>
 	//
-	//
-	//  <><><><><>  This web page may be UNNECESSARY.  <><><><><><>
-	//
-//	getPage("https://www.smartmetertexas.com:443/CAP/public/"); // 91
 
 	List<NameValuePair> nameValuePairs = new ArrayList<>();
 	nameValuePairs.add(new NameValuePair("pass_dup", ""));
@@ -932,10 +928,7 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	checkThatServerIsUp(wp) ;
 	checkforGatewayTimeout(wp) ;
 	addressSuffix = extractAddressFromLogin(wp);
-	/*
-	 * Need to add getting a web page so that some cookies are set.
-	 * 
-	 */
+
 	//
 	// <><><><><>  Get a web page  <><><><><><>
 	//

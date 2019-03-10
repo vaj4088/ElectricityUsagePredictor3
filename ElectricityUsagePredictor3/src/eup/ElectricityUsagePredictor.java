@@ -31,7 +31,6 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-
 import org.jdatepicker.impl.JDatePanelImpl;
 import org.jdatepicker.impl.JDatePickerImpl;
 import org.jdatepicker.impl.UtilDateModel;
@@ -43,6 +42,10 @@ import org.jdatepicker.impl.UtilDateModel;
  * 
  * @author Ian Shef
  * 
+ */
+/**
+ * @author vaj4088
+ *
  */
 public class ElectricityUsagePredictor
 extends JFrame
@@ -340,6 +343,7 @@ implements ActionListener {
      */
     public static void main(String[] args) {
 	Integer h ;
+	boolean changedTheDate ;
 	//
 	// ElectricityUsagePredictor extends JFrame and
 	// thus must be set up via the
@@ -377,11 +381,11 @@ implements ActionListener {
 	    gui.cdl = new CountDownLatch(1) ;
 	    try {
 		//
-		//  WAIT HERE until the Go button is pushed.
+		//  WAIT HERE until the GO button is pushed.
 		//
 		gui.cdl.await() ;
 		//
-		//  CONTINUE because the Go button was pushed.
+		//  CONTINUE because the GO button was pushed.
 		//
 	    } catch (InterruptedException e) {
 		e.printStackTrace();
@@ -415,15 +419,13 @@ implements ActionListener {
 	    /*
 	     *  Store current billing date for future use.
 	     */
-	    CommonPreferences.set(
-		    gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_YEAR), 
-		    String.valueOf(cBDLD.getYear())) ;
-	    CommonPreferences.set(
-		    gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_MONTH), 
-		    String.valueOf(cBDLD.getMonthValue())) ;
-	    CommonPreferences.set(
-		    gui.settingsMap.get(Setting.MOST_RECENT_BILL_DATE_DAY), 
-		    String.valueOf(cBDLD.getDayOfMonth())) ;
+	    writeToCache(
+		    gui.settingsMap, 
+		    Setting.MOST_RECENT_BILL_DATE_YEAR, 
+		    Setting.MOST_RECENT_BILL_DATE_MONTH, 
+		    Setting.MOST_RECENT_BILL_DATE_DAY, 
+		    cBDLD
+		    ) ;
 	    /*
 	     * End of storing year, month and day of the current billing date.
 	     */
@@ -431,15 +433,13 @@ implements ActionListener {
 	    /*
 	     *  Store next billing date for future use.
 	     */
-	    CommonPreferences.set(
-		    gui.settingsMap.get(Setting.NEXT_BILL_DATE_YEAR), 
-		    String.valueOf(nBDLD.getYear())) ;
-	    CommonPreferences.set(
-		    gui.settingsMap.get(Setting.NEXT_BILL_DATE_MONTH), 
-		    String.valueOf(nBDLD.getMonthValue())) ;
-	    CommonPreferences.set(
-		    gui.settingsMap.get(Setting.NEXT_BILL_DATE_DAY), 
-		    String.valueOf(nBDLD.getDayOfMonth())) ;
+	    writeToCache(
+		    gui.settingsMap, 
+		    Setting.NEXT_BILL_DATE_YEAR, 
+		    Setting.NEXT_BILL_DATE_MONTH, 
+		    Setting.NEXT_BILL_DATE_DAY, 
+		    nBDLD
+		    ) ;
 	    /*
 	     * End of storing year, month and day of the next billing date.
 	     */
@@ -465,6 +465,7 @@ implements ActionListener {
 				get(Setting.CURRENT_DATE_READING)
 				)) ;
 		currentDateUsed = cDLD ;
+		changedTheDate = false ;
 		usedCurrentDateReadingCache = true ;
 	    } else {
 		gdcDLD = 
@@ -477,6 +478,13 @@ implements ActionListener {
 		gdcDLD.setFeedbacker(gui.fb) ;
 		currentMeterReading     = 
 			gdcDLD.getStartRead() ;
+		writeToCache(
+			gui.settingsMap, 
+			Setting.CURRENT_DATE_YEAR,
+			Setting.CURRENT_DATE_MONTH,
+			Setting.CURRENT_DATE_DAY, 
+			gdcDLD.getDate()
+			) ;
 		CommonPreferences.set(
 			gui.settingsMap.
 			get(Setting.CURRENT_DATE_READING),
@@ -488,6 +496,7 @@ implements ActionListener {
 			Setting.VALID
 			) ;
 		currentDateUsed = gdcDLD.getDate() ;
+		changedTheDate = gdcDLD.isDateChanged() ;
 		usedCurrentDateReadingCache = false ;
 	    }
 	    /*
@@ -528,6 +537,13 @@ implements ActionListener {
 			    .build();
 		    gdcBDLD.setFeedbacker(gui.fb) ;
 		    currentBillMeterReading = gdcBDLD.getStartRead();
+			writeToCache(
+				gui.settingsMap, 
+				Setting.MOST_RECENT_BILL_DATE_YEAR,
+				Setting.MOST_RECENT_BILL_DATE_MONTH,
+				Setting.MOST_RECENT_BILL_DATE_DAY,
+				gdcBDLD.getDate()
+				) ;
 			CommonPreferences.set(
 				gui.settingsMap.
 				get(Setting.MOST_RECENT_BILL_DATE_READING),
@@ -560,13 +576,6 @@ implements ActionListener {
 	    StringBuilder sb = new StringBuilder("\r\n") ;
 	    sb.append("Current Bill Date: ") ;
 	    sb.append(predictor.getDateBillCurrent()) ;
-	    if ((gdcBDLD != null) && 
-		    gdcBDLD.isDateChanged()) {
-		sb.append(
-			fiveNonBreakingSpaces +
-				"<<<<<<<<<<<<  CHANGED  >>>>>>>>>>>>"
-				) ;
-	    }
 	    sb.append("\r\n") ; 
 	    sb.append("Current Bill Meter Reading: ") ;
 	    h = new Integer(predictor.getMeterReadingBillCurrent()) ;
@@ -578,10 +587,18 @@ implements ActionListener {
 			) ;
 	    }
 	    sb.append("\r\n\r\n") ;
-	    sb.append("Current Date: ");
+	    sb.append("Current ");
+	    sb.append(fiveNonBreakingSpaces) ;
+	    sb.append(nonbreakingSpace) ;
+	    sb.append("Date: ");
 	    sb.append(predictor.getDateCurrent().toString()) ;
-	    if ((gdcDLD != null) && 
-		    gdcDLD.isDateChanged()) {
+//	    if (changedTheDate) {
+//		sb.append(
+//			fiveNonBreakingSpaces +
+//				"<<<<<<<<<<<<  CHANGED  >>>>>>>>>>>>"
+//				) ;
+//	    }
+	    if (changedTheDate) {
 		sb.append(
 			fiveNonBreakingSpaces +
 				"<<<<<<<<<<<< "+
@@ -606,7 +623,9 @@ implements ActionListener {
 			) ;
 	    }
 	    sb.append("\r\n\r\n") ;
-	    sb.append("Next    Bill Date   : ");
+	    sb.append("Next ") ;
+	    sb.append(fiveNonBreakingSpaces) ;
+	    sb.append("Bill Date   : ") ;
 	    sb.append(predictor.getDateBillNext().toString()) ;
 	    sb.append(" (") ;
 	    sb.append(Long.valueOf(predictor.
@@ -743,6 +762,14 @@ implements ActionListener {
 	});
     }
     
+    /**
+     * @param settingsMap2
+     * @param storedNameYear
+     * @param storedNameMonth
+     * @param storedNameDay
+     * @param lD
+     * @return
+     */
     private static boolean canUseCachedValue(
 	    final Map<? extends String, ? extends Setting> settingsMap2,
 	    final String storedNameYear,
@@ -750,7 +777,6 @@ implements ActionListener {
 	    final String storedNameDay,
 	    final LocalDate lD
 	    ) {
-	boolean result ;
 
 	String lDYear = String.valueOf(lD.getYear()) ;
 	String lDMonth = String.valueOf(lD.getMonthValue()) ;
@@ -772,30 +798,43 @@ implements ActionListener {
 			get(storedNameDay)
 			) ;
 
-	if (
+	return (
 		storedYear.equals(lDYear) &&
 		storedMonth.equals(lDMonth) &&
 		storedDay.equals(lDDay)
-		) 
-	{
-	    result = true ;
-	} else {  //  Need to update the cache.
-	    CommonPreferences.set(
-		    settingsMap2.
-		    get(storedNameYear), 
-		    lDYear) ;
-	    CommonPreferences.set(
-		    settingsMap2.
-		    get(storedNameMonth), 
-		    lDMonth) ;
-	    CommonPreferences.set(
-		    settingsMap2.
-		    get(storedNameDay), 
-		    lDDay) ;
-	    
-	    result = false ;
-	}
-	return result ;
+		) ;
+    }
+
+    /**
+     * @param settingsMap2
+     * @param storedNameYear
+     * @param storedNameMonth
+     * @param storedNameDay
+     * @param lD
+     */
+    private static void writeToCache(
+	    final Map<? extends String, ? extends Setting> settingsMap2,
+	    final String storedNameYear, 
+	    final String storedNameMonth,
+	    final String storedNameDay, 
+	    final LocalDate lD
+	    ) {
+	String lDYear = String.valueOf(lD.getYear()) ;
+	String lDMonth = String.valueOf(lD.getMonthValue()) ;
+	String lDDay = String.valueOf(lD.getDayOfMonth()) ;
+	
+	CommonPreferences.set(
+		settingsMap2.
+		get(storedNameYear), 
+		lDYear) ;
+	CommonPreferences.set(
+		settingsMap2.
+		get(storedNameMonth), 
+		lDMonth) ;
+	CommonPreferences.set(
+		settingsMap2.
+		get(storedNameDay), 
+		lDDay) ;
     }
     
     class DateLabelFormatter extends AbstractFormatter {
