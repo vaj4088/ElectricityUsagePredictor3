@@ -424,6 +424,8 @@ implements ActionListener {
 		    Setting.MOST_RECENT_BILL_DATE_YEAR, 
 		    Setting.MOST_RECENT_BILL_DATE_MONTH, 
 		    Setting.MOST_RECENT_BILL_DATE_DAY, 
+		    Setting.MOST_RECENT_BILL_DATE_READING,
+		    Setting.MOST_RECENT_BILL_READING_VALIDITY,
 		    cBDLD
 		    ) ;
 	    /*
@@ -438,6 +440,8 @@ implements ActionListener {
 		    Setting.NEXT_BILL_DATE_YEAR, 
 		    Setting.NEXT_BILL_DATE_MONTH, 
 		    Setting.NEXT_BILL_DATE_DAY, 
+		    null,
+		    null,
 		    nBDLD
 		    ) ;
 	    /*
@@ -456,6 +460,7 @@ implements ActionListener {
 		    Setting.CURRENT_DATE_YEAR,
 		    Setting.CURRENT_DATE_MONTH,
 		    Setting.CURRENT_DATE_DAY,
+		    Setting.CURRENT_READING_VALIDITY,
 		    cDLD
 		    )) {
 		currentMeterReading = 		
@@ -483,6 +488,8 @@ implements ActionListener {
 			Setting.CURRENT_DATE_YEAR,
 			Setting.CURRENT_DATE_MONTH,
 			Setting.CURRENT_DATE_DAY, 
+			Setting.CURRENT_DATE_READING,
+			Setting.CURRENT_READING_VALIDITY,
 			gdcDLD.getDate()
 			) ;
 		CommonPreferences.set(
@@ -516,6 +523,7 @@ implements ActionListener {
 		    Setting.MOST_RECENT_BILL_DATE_YEAR,
 		    Setting.MOST_RECENT_BILL_DATE_MONTH,
 		    Setting.MOST_RECENT_BILL_DATE_DAY,
+		    Setting.MOST_RECENT_BILL_READING_VALIDITY,
 		    cBDLD
 		    )) {
 		currentBillMeterReading = 
@@ -542,6 +550,8 @@ implements ActionListener {
 				Setting.MOST_RECENT_BILL_DATE_YEAR,
 				Setting.MOST_RECENT_BILL_DATE_MONTH,
 				Setting.MOST_RECENT_BILL_DATE_DAY,
+				Setting.MOST_RECENT_BILL_DATE_READING,
+				Setting.MOST_RECENT_BILL_READING_VALIDITY,
 				gdcBDLD.getDate()
 				) ;
 			CommonPreferences.set(
@@ -592,12 +602,6 @@ implements ActionListener {
 	    sb.append(nonbreakingSpace) ;
 	    sb.append("Date: ");
 	    sb.append(predictor.getDateCurrent().toString()) ;
-//	    if (changedTheDate) {
-//		sb.append(
-//			fiveNonBreakingSpaces +
-//				"<<<<<<<<<<<<  CHANGED  >>>>>>>>>>>>"
-//				) ;
-//	    }
 	    if (changedTheDate) {
 		sb.append(
 			fiveNonBreakingSpaces +
@@ -637,6 +641,16 @@ implements ActionListener {
 	    sb.append("\r\n") ;
 	    gui.fb.progressAnnounce(false) ;
 	    int predictedUsage = predictor.predictUsage() ;
+	    String predictedUsageString ;
+	    if (predictor.getDateBillCurrent().
+		    equals(predictor.getDateCurrent())) 
+	    {
+		predictedUsageString = 
+			"No prediction is possible " +
+				"because dates are the same." ;
+	    } else {
+		predictedUsageString = String.valueOf(predictedUsage);
+	    }
 	    @SuppressWarnings("resource")
 	    PrintStream where = 
 	        ((predictedUsage>=500) && (predictedUsage<=1000))?
@@ -652,8 +666,7 @@ implements ActionListener {
 	        public void run() {
 	            System.out.println(sb) ;
 		    where.print("Predicted Usage : ") ;
-		    where.println(predictedUsage) ;
-//		    System.out.println(getFeedbacker()) ;
+		    where.println(predictedUsageString) ;
 	        }
 	    });
 	}
@@ -775,13 +788,25 @@ implements ActionListener {
 	    final String storedNameYear,
 	    final String storedNameMonth,
 	    final String storedNameDay,
+	    final String storedNameValidity,
 	    final LocalDate lD
 	    ) {
 
+	boolean valid ;
 	String lDYear = String.valueOf(lD.getYear()) ;
 	String lDMonth = String.valueOf(lD.getMonthValue()) ;
 	String lDDay = String.valueOf(lD.getDayOfMonth()) ;
 	
+	if (storedNameValidity == null) {
+	    valid = false ;
+	} else {
+	    valid = (
+		    CommonPreferences.get(
+			    settingsMap2.
+			    get(storedNameValidity)
+			    )
+		    ).equals(Setting.VALID) ;
+	}
 	String storedYear =
 		CommonPreferences.get(
 			settingsMap2.
@@ -799,6 +824,7 @@ implements ActionListener {
 			) ;
 
 	return (
+		valid &&
 		storedYear.equals(lDYear) &&
 		storedMonth.equals(lDMonth) &&
 		storedDay.equals(lDDay)
@@ -817,24 +843,49 @@ implements ActionListener {
 	    final String storedNameYear, 
 	    final String storedNameMonth,
 	    final String storedNameDay, 
+	    final String storedNameReading,
+	    final String storedNameValidity,
 	    final LocalDate lD
 	    ) {
 	String lDYear = String.valueOf(lD.getYear()) ;
 	String lDMonth = String.valueOf(lD.getMonthValue()) ;
 	String lDDay = String.valueOf(lD.getDayOfMonth()) ;
 	
-	CommonPreferences.set(
-		settingsMap2.
-		get(storedNameYear), 
-		lDYear) ;
-	CommonPreferences.set(
-		settingsMap2.
-		get(storedNameMonth), 
-		lDMonth) ;
-	CommonPreferences.set(
-		settingsMap2.
-		get(storedNameDay), 
-		lDDay) ;
+	if (canUseCachedValue(
+		settingsMap2, 
+		storedNameYear, 
+		storedNameMonth, 
+		storedNameDay,
+		storedNameValidity,
+		lD
+		)) 
+	{
+	    // Nothing to do when date matches
+	} else {
+	    // 
+		CommonPreferences.set(
+			settingsMap2.
+			get(storedNameYear), 
+			lDYear) ;
+		CommonPreferences.set(
+			settingsMap2.
+			get(storedNameMonth), 
+			lDMonth) ;
+		CommonPreferences.set(
+			settingsMap2.
+			get(storedNameDay), 
+			lDDay) ;
+		if (storedNameReading != null) {
+		    CommonPreferences.set(
+			    settingsMap2.
+			    get(storedNameReading),
+			    "-1");
+		}
+		if (storedNameValidity != null) {
+		    CommonPreferences.set(settingsMap2.get(storedNameValidity),
+			    Setting.INVALID);
+		}
+	}
     }
     
     class DateLabelFormatter extends AbstractFormatter {
