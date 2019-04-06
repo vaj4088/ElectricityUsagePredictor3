@@ -73,6 +73,7 @@ implements ActionListener {
     		<ElectricityUsagePredictor>() ;
     
     private CountDownLatch cdl ;
+    private JButton jb ;
     private volatile Date cBD ;
     private volatile Date cD ;
     private volatile Date nBD ;
@@ -301,7 +302,7 @@ implements ActionListener {
 				datePickerNextBillDate.getBorder()));
 	hbox1.add(datePickerNextBillDate) ;
 	
-	JButton jb = new JButton("GO (predict)") ; 
+	jb = new JButton("GO (predict)") ; 
 	jb.setBackground(Color.GREEN) ;
 	jb.setFont(jb.getFont().deriveFont(Font.BOLD)) ;
 	hbox1.add(jb) ;
@@ -373,6 +374,16 @@ implements ActionListener {
 	}
 	while (true) {
 	    ElectricityUsagePredictor gui = guiAtomicReference.get() ;
+	    /*
+	     * Workaround for enabling the date pickers.
+	     */
+	    gui.datePickerCurrentBillDate.getComponent(1).setEnabled(true) ;
+	    gui.datePickerCurrentDate.getComponent(1).setEnabled(true) ;
+	    gui.datePickerNextBillDate.getComponent(1).setEnabled(true) ;
+	    /*
+	     * End workaround for enabling the date pickers.
+	     */
+	    gui.jb.setEnabled(true);
 	    gui.fb.progressAnnounce(false, "Waiting for GO (predict)") ;
 	    gui.cdl = new CountDownLatch(1) ;
 	    try {
@@ -388,6 +399,16 @@ implements ActionListener {
 		// Restore the interrupted status
 		Thread.currentThread().interrupt();
 	    }
+	    /*
+	     * Workaround for disabling the date pickers.
+	     */
+	    gui.datePickerCurrentBillDate.getComponent(1).setEnabled(false) ;
+	    gui.datePickerCurrentDate.getComponent(1).setEnabled(false) ;
+	    gui.datePickerNextBillDate.getComponent(1).setEnabled(false) ;
+	    /*
+	     * End workaround for disabling the date pickers.
+	     */
+	    gui.jb.setEnabled(false) ;
 	    gui.fb.activityAnnounce(
 		    startProgress1, 
 		    "Starting...", 
