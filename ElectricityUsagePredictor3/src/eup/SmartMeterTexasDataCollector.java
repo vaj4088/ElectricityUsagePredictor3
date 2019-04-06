@@ -12,6 +12,9 @@ import webPage.WebPage;
 import java.awt.Container;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -22,9 +25,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-//import java.util.concurrent.ExecutorService;
-//import java.util.concurrent.Executors;
-//import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.BoxLayout;
@@ -896,6 +896,12 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
     }
 
     WebPage login() {
+	//
+	// Prepare for account parameters that are not built-in to the program.
+	//
+	AccountInfo accountInfo = new AccountInfo() ;
+//	System.out.println((accountInfo)) ;
+	
 	WebPage wp = null ;
 	
 
@@ -905,8 +911,10 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 
 	List<NameValuePair> nameValuePairs = new ArrayList<>();
 	nameValuePairs.add(new NameValuePair("pass_dup", ""));
-	nameValuePairs.add(new NameValuePair("username", "VAJ4088"));
-	nameValuePairs.add(new NameValuePair("password", "bri2bri"));
+	nameValuePairs.add(new NameValuePair("username", 
+		accountInfo.getID()));
+	nameValuePairs.add(new NameValuePair("password", 
+		accountInfo.getPassword()));
 	nameValuePairs.add(new NameValuePair("buttonName", ""));
 	nameValuePairs.add(new NameValuePair("login-form-type", "pwd"));
 	while (wp == null) {
@@ -1379,5 +1387,60 @@ execute the FutureTask... – Eric Lindauer Nov 20 '12 at 6:08
 	    dc = dateChanged ;
 	}
 	return dc ;
+    }
+    
+    private static class AccountInfo {
+	private String iD = "" ;
+	private String password = "" ;
+	private static final String charEncoding = "UTF-8" ;
+	final URL url = this.getClass().getProtectionDomain().
+		getCodeSource().getLocation() ;
+	final File f = new File(decode(url.getPath()) +
+		"\\" + getClass().getSimpleName() + ".txt" ) ;
+
+	AccountInfo() {
+	    //
+	    // Using Util.makeArrayList(0) eliminates a compiler warning.
+	    //
+	    List<String> list  = Util.makeArrayList(0) ;
+	    if (!f.exists()) {
+		throw new AssertionError("File " +
+			f + " is missing.") ;
+	    }
+	    if (!f.canRead()) {
+		throw new AssertionError("File " +
+			f + " is not readable.") ;
+	    }
+	    try {
+		list = Files.readAllLines(f.toPath()) ;
+	    } catch (IOException e) {
+		e.printStackTrace();
+		throw new AssertionError("File " +
+			f + " cannot be read for unexpected reason.") ;
+	    }
+	    iD = list.get(0).toUpperCase() ;
+	    password = list.get(1) ;
+	}
+	
+	private static String decode(String s) {
+		String result ;
+		try {
+			result = URLDecoder.decode(s, charEncoding);
+		} catch (UnsupportedEncodingException e) {
+			result = s ;
+		}
+		return result ;
+	}
+	
+	String getID() {
+	    return iD ;
+	}
+	String getPassword() {
+	    return password ;
+	}
+	@Override
+	public String toString() {
+	    return "File used is " + f  ;
+	}
     }
 }

@@ -21,11 +21,15 @@ public final class Version<T> implements Serializable, Comparable<T> {
 //    private static final String versionDate = __DATE__ ;
 //    private static final String versionTime = __TIME__ ;
     private static final String VERSION = "Revised on Date Time Zone: " +
-	    "2019-03-12 16:15:28 -0500" // IanDateTime
+	    "2019-04-06 15:49:13 -0500" //  IanDateTime
 
 /*
  * Use
  * 	    Window | Preferences | Java | Editor | Template IanDateTime
+ * 
+ * Put cursor in front of IanDateTime and press CTRL-spacebar,
+ * then hit enter and do any clean up.
+ * 
  */
 	    + " via manual intervention.";
     private static final long serialVersionUID = 1L;

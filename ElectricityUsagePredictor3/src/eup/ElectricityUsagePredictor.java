@@ -43,10 +43,6 @@ import org.jdatepicker.impl.UtilDateModel;
  * @author Ian Shef
  * 
  */
-/**
- * @author vaj4088
- *
- */
 public class ElectricityUsagePredictor
 extends JFrame
 implements ActionListener {
