@@ -664,7 +664,8 @@ implements ActionListener {
 	    {
 		predictedUsageString = 
 			"No prediction is possible " +
-				"because dates are the same." ;
+				"because Date of Most Recent Bill " + 
+				"and Current Date are the same." ;
 	    } else {
 		predictedUsageString = String.valueOf(predictedUsage);
 	    }
